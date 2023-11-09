@@ -7,16 +7,18 @@ public class RoomRepository : BaseRepository, IRoomRepository
 {
     public RoomRepository(WatchTowerDbContext context) : base(context) {}
 
-    public Guid CreateRoom(string password)
+    public RoomModel CreateRoom(string name, string password, UserModel owner)
     {
         var newRoom = context.Rooms.Add(
             new RoomModel()
             {
-                Password = password
+                RoomName = name,
+                Password = password,
+                Owner = owner
             });
         if (SaveChanges())
         {
-            return newRoom.Entity.RoomId;
+            return newRoom.Entity;
         }
         else
         {
@@ -25,9 +27,9 @@ public class RoomRepository : BaseRepository, IRoomRepository
         }
     }
 
-    public RoomModel GetRoomById(Guid id)
+    public RoomModel GetRoomByName(string name)
     {
-        var result = context.Rooms.Find(id);
+        var result = context.Rooms.Find(name);
         if (result is not null)
         {
             return result;
@@ -39,10 +41,15 @@ public class RoomRepository : BaseRepository, IRoomRepository
         }
     }
 
-    public bool CheckRoomAndPassword(Guid id, string? password)
+    public RoomModel GetFirstRoom()
     {
-        var roomToCheck = context.Rooms.Find(id);
-        if (roomToCheck?.Password == password ) // TODO ? !!!
+        return context.Rooms.First();
+    }
+
+    public bool CheckRoomAndPassword(string roomName, string? password)
+    {
+        var roomToCheck = context.Rooms.Find(roomName);
+        if (roomToCheck?.Password == password || roomToCheck?.Password == null) // TODO ? !!!
         {
             return true;
         }

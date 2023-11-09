@@ -10,9 +10,10 @@ public class CameraModel
 {
     [Key]
     [DatabaseGenerated(DatabaseGeneratedOption.Identity)] 
-    public string CameraId { get; set; }
-    public Guid? RoomId { get; set; }
-    
-    [ForeignKey("RoomId")]
+    public Guid Id { get; set; }
+    public bool? AcceptationState { get; set; }
+
+    [ForeignKey("RoomName")]
     public RoomModel? Room { get; set; }
+    public string RoomName { get; set; }
 }

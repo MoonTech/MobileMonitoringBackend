@@ -4,7 +4,8 @@ namespace WatchTowerAPI.BusinessLogical.Repositories.RoomRepository;
 
 public interface IRoomRepository
 {
-    public Guid CreateRoom(string password);
-    public RoomModel GetRoomById(Guid id);
-    public bool CheckRoomAndPassword(Guid id, string? password);
+    public RoomModel CreateRoom(string name, string password, UserModel owner);
+    public RoomModel GetRoomByName(string name);
+    public RoomModel GetFirstRoom(); // TODO Delete it, it is just for test
+    public bool CheckRoomAndPassword(string roomName, string? password);
 }

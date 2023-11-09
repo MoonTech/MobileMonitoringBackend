@@ -24,41 +24,87 @@ namespace WatchTowerAPI.DataAccess.Migrations
 
             modelBuilder.Entity("WatchTowerAPI.Domain.Models.CameraModel", b =>
                 {
-                    b.Property<string>("CameraId")
+                    b.Property<string>("CameraToken")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("nvarchar(450)");
 
-                    b.Property<Guid?>("RoomId")
-                        .HasColumnType("uniqueidentifier");
+                    b.Property<bool?>("AcceptationState")
+                        .HasColumnType("bit");
 
-                    b.HasKey("CameraId");
+                    b.Property<string>("RoomName")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
 
-                    b.HasIndex("RoomId");
+                    b.HasKey("CameraToken");
+
+                    b.HasIndex("RoomName");
 
                     b.ToTable("Cameras");
                 });
 
             modelBuilder.Entity("WatchTowerAPI.Domain.Models.RoomModel", b =>
                 {
-                    b.Property<Guid>("RoomId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uniqueidentifier");
+                    b.Property<string>("RoomName")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<string>("OwnerLogin")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
 
                     b.Property<string>("Password")
                         .HasColumnType("nvarchar(max)");
 
-                    b.HasKey("RoomId");
+                    b.HasKey("RoomName");
+
+                    b.HasIndex("OwnerLogin");
 
                     b.ToTable("Rooms");
+                });
+
+            modelBuilder.Entity("WatchTowerAPI.Domain.Models.UserModel", b =>
+                {
+                    b.Property<string>("Login")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<string>("Password")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Login");
+
+                    b.ToTable("Users");
                 });
 
             modelBuilder.Entity("WatchTowerAPI.Domain.Models.CameraModel", b =>
                 {
                     b.HasOne("WatchTowerAPI.Domain.Models.RoomModel", "Room")
-                        .WithMany()
-                        .HasForeignKey("RoomId");
+                        .WithMany("Cameras")
+                        .HasForeignKey("RoomName")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
 
                     b.Navigation("Room");
+                });
+
+            modelBuilder.Entity("WatchTowerAPI.Domain.Models.RoomModel", b =>
+                {
+                    b.HasOne("WatchTowerAPI.Domain.Models.UserModel", "Owner")
+                        .WithMany("Rooms")
+                        .HasForeignKey("OwnerLogin")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Owner");
+                });
+
+            modelBuilder.Entity("WatchTowerAPI.Domain.Models.RoomModel", b =>
+                {
+                    b.Navigation("Cameras");
+                });
+
+            modelBuilder.Entity("WatchTowerAPI.Domain.Models.UserModel", b =>
+                {
+                    b.Navigation("Rooms");
                 });
 #pragma warning restore 612, 618
         }

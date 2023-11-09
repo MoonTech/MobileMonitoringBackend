@@ -9,5 +9,6 @@ namespace WatchTowerAPI.DataAccess.DbContexts
         
         public DbSet<CameraModel> Cameras { get; set; }
         public DbSet<RoomModel> Rooms { get; set; }
+        public DbSet<UserModel> Users { get; set; }
     }
 }

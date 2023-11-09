@@ -7,14 +7,21 @@ public class CameraRepository : BaseRepository, ICameraRepository
 {
     public CameraRepository(WatchTowerDbContext context) : base(context) {}
     
-    public bool CreateCameraWithRoom(string cameraId, RoomModel room)
+    public CameraModel? CreateCameraWithRoom(RoomModel room)
     {
-        context.Cameras.Add(new CameraModel()
+        var roomEntity = context.Cameras.Add(new CameraModel()
         {
-            CameraId = cameraId,
             Room = room
         });
-        return SaveChanges();
+        var newCamera = roomEntity.Entity;
+        if (SaveChanges())
+        {
+            return newCamera;
+        }
+        else
+        {
+            return null;
+        }
     }
 
     public CameraModel GetCameraById(string id)
@@ -31,9 +38,9 @@ public class CameraRepository : BaseRepository, ICameraRepository
         }
     }
 
-    public bool AssignNewRoom(string cameraId, RoomModel room)
+    public bool AssignNewRoom(string cameraName, RoomModel room)
     {
-        var camera = GetCameraById(cameraId);
+        var camera = GetCameraById(cameraName);
         camera.Room = room;
         return SaveChanges();
     }
