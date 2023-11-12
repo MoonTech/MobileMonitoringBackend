@@ -72,18 +72,17 @@ public class userController : ControllerBase
         var credentials = new SigningCredentials(securityKey, SecurityAlgorithms.HmacSha256);
         var claims = new[]
         {
-            new Claim(ClaimTypes.NameIdentifier,user.Login),
-            //new Claim(ClaimTypes.Role,user.Role) //TODO Should we add roles to our database?
+            new Claim("login",user.Login),
+            new Claim("role", "normal user") //TODO Should we add roles to our database?
         };
+        
         var token = new JwtSecurityToken(_config["Jwt:Issuer"],
             _config["Jwt:Audience"],
             claims,
             expires: DateTime.Now.AddMinutes(15),
             signingCredentials: credentials);
-
-
+        
         return new JwtSecurityTokenHandler().WriteToken(token);
-
     }
     private UserModel? Authenticate(LoginUserParameter user)
     {

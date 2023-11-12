@@ -3,17 +3,20 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using WatchTowerAPI.DataAccess.DbContexts;
 
 #nullable disable
 
-namespace WatchTowerAPI.DataAccess.Migrations
+namespace WatchTowerBackend.Migrations
 {
     [DbContext(typeof(WatchTowerDbContext))]
-    partial class WatchTowerDbContextModelSnapshot : ModelSnapshot
+    [Migration("20231107113302_lkjjkl")]
+    partial class lkjjkl
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -24,20 +27,23 @@ namespace WatchTowerAPI.DataAccess.Migrations
 
             modelBuilder.Entity("WatchTowerAPI.Domain.Models.CameraModel", b =>
                 {
-                    b.Property<Guid>("Id")
+                    b.Property<string>("CameraToken")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("uniqueidentifier");
+                        .HasColumnType("nvarchar(450)");
 
                     b.Property<bool?>("AcceptationState")
                         .HasColumnType("bit");
 
                     b.Property<string>("RoomName")
                         .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("RoomName1")
                         .HasColumnType("nvarchar(450)");
 
-                    b.HasKey("Id");
+                    b.HasKey("CameraToken");
 
-                    b.HasIndex("RoomName");
+                    b.HasIndex("RoomName1");
 
                     b.ToTable("Cameras");
                 });
@@ -57,9 +63,6 @@ namespace WatchTowerAPI.DataAccess.Migrations
                     b.HasKey("RoomName");
 
                     b.HasIndex("OwnerLogin");
-
-                    b.HasIndex("RoomName")
-                        .IsUnique();
 
                     b.ToTable("Rooms");
                 });
@@ -81,10 +84,8 @@ namespace WatchTowerAPI.DataAccess.Migrations
             modelBuilder.Entity("WatchTowerAPI.Domain.Models.CameraModel", b =>
                 {
                     b.HasOne("WatchTowerAPI.Domain.Models.RoomModel", "Room")
-                        .WithMany("Cameras")
-                        .HasForeignKey("RoomName")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .WithMany()
+                        .HasForeignKey("RoomName1");
 
                     b.Navigation("Room");
                 });
@@ -92,22 +93,12 @@ namespace WatchTowerAPI.DataAccess.Migrations
             modelBuilder.Entity("WatchTowerAPI.Domain.Models.RoomModel", b =>
                 {
                     b.HasOne("WatchTowerAPI.Domain.Models.UserModel", "Owner")
-                        .WithMany("Rooms")
+                        .WithMany()
                         .HasForeignKey("OwnerLogin")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.Navigation("Owner");
-                });
-
-            modelBuilder.Entity("WatchTowerAPI.Domain.Models.RoomModel", b =>
-                {
-                    b.Navigation("Cameras");
-                });
-
-            modelBuilder.Entity("WatchTowerAPI.Domain.Models.UserModel", b =>
-                {
-                    b.Navigation("Rooms");
                 });
 #pragma warning restore 612, 618
         }

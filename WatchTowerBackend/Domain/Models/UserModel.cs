@@ -9,6 +9,6 @@ public class UserModel
     [Key]
     public string Login { get; set; }
     public string Password { get; set; }
-    
+
     public ICollection<RoomModel> Rooms { get; set; }
 }

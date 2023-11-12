@@ -5,5 +5,5 @@ namespace WatchTowerAPI.Contracts.DTOs.Responses.Room;
 
 public class GetAllRoomsResponse
 {
-    public List<RoomWithoutPassword> Rooms { get; set; }
+    public ICollection<RoomDTO> Rooms { get; set; }
 }

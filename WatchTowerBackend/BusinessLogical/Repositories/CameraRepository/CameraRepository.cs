@@ -1,4 +1,5 @@
-﻿using WatchTowerAPI.DataAccess.DbContexts;
+﻿using Microsoft.EntityFrameworkCore;
+using WatchTowerAPI.DataAccess.DbContexts;
 using WatchTowerAPI.Domain.Models;
 
 namespace WatchTowerAPI.BusinessLogical.Repositories.CameraRepository;
@@ -11,6 +12,7 @@ public class CameraRepository : BaseRepository, ICameraRepository
     {
         var roomEntity = context.Cameras.Add(new CameraModel()
         {
+            AcceptationState = null,
             Room = room
         });
         var newCamera = roomEntity.Entity;
@@ -24,9 +26,10 @@ public class CameraRepository : BaseRepository, ICameraRepository
         }
     }
 
-    public CameraModel GetCameraById(string id)
+    public CameraModel? GetCameraById(Guid id)
     {
-        var result = context.Cameras.Find(id);
+        var result = context.Cameras.Include(camera => camera.Room)
+            .SingleOrDefault(camera => camera.Id == id);
         if (result is not null)
         {
             return result;
@@ -38,9 +41,27 @@ public class CameraRepository : BaseRepository, ICameraRepository
         }
     }
 
-    public bool AssignNewRoom(string cameraName, RoomModel room)
+    public bool DeleteCamera(CameraModel camera)
     {
-        var camera = GetCameraById(cameraName);
+        context.Cameras.Remove(camera);
+        return SaveChanges();
+    }
+
+    public bool AcceptCamera(CameraModel camera)
+    {
+        camera.AcceptationState = true;
+        return SaveChanges();
+    }
+
+    public bool RejectCamera(CameraModel camera)
+    {
+        camera.AcceptationState = false;
+        return SaveChanges();
+    }
+
+    public bool AssignNewRoom(Guid id, RoomModel room)
+    {
+        var camera = GetCameraById(id);
         camera.Room = room;
         return SaveChanges();
     }

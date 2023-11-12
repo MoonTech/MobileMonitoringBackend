@@ -3,17 +3,20 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using WatchTowerAPI.DataAccess.DbContexts;
 
 #nullable disable
 
-namespace WatchTowerAPI.DataAccess.Migrations
+namespace WatchTowerBackend.Migrations
 {
     [DbContext(typeof(WatchTowerDbContext))]
-    partial class WatchTowerDbContextModelSnapshot : ModelSnapshot
+    [Migration("20231107114850_kjkl")]
+    partial class kjkl
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -24,9 +27,9 @@ namespace WatchTowerAPI.DataAccess.Migrations
 
             modelBuilder.Entity("WatchTowerAPI.Domain.Models.CameraModel", b =>
                 {
-                    b.Property<Guid>("Id")
+                    b.Property<string>("CameraToken")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("uniqueidentifier");
+                        .HasColumnType("nvarchar(450)");
 
                     b.Property<bool?>("AcceptationState")
                         .HasColumnType("bit");
@@ -35,7 +38,7 @@ namespace WatchTowerAPI.DataAccess.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(450)");
 
-                    b.HasKey("Id");
+                    b.HasKey("CameraToken");
 
                     b.HasIndex("RoomName");
 
@@ -57,9 +60,6 @@ namespace WatchTowerAPI.DataAccess.Migrations
                     b.HasKey("RoomName");
 
                     b.HasIndex("OwnerLogin");
-
-                    b.HasIndex("RoomName")
-                        .IsUnique();
 
                     b.ToTable("Rooms");
                 });

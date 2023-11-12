@@ -1,5 +1,6 @@
 ﻿using WatchTowerAPI.Domain.Models;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.ChangeTracking;
 
 namespace WatchTowerAPI.DataAccess.DbContexts
 {

@@ -9,6 +9,7 @@ using WatchTowerAPI.Contracts.DTOs.Responses;
 using WatchTowerAPI.Contracts.DTOs.Responses.Camera;
 using WatchTowerAPI.Contracts.DTOs.Responses.Room;
 using WatchTowerAPI.Domain.Models;
+using WatchTowerBackend.BusinessLogical.Authentication;
 
 namespace WatchTowerAPI.Presentation.Controllers;
 
@@ -27,18 +28,28 @@ public class cameraController : ControllerBase
     }
 
     [HttpPost]
+    [Authorize]
     public PostCameraResponse PostCamera(PostCameraParameter parameter)
     {
-        var roomParamter = _roomRepository.GetRoomByName(parameter.RoomName);
+        var roomParameter = _roomRepository.GetRoomByName(parameter.RoomName);
+        var userLogin = Request.GetUserLoginFromToken();
+        if (roomParameter is null)
+        {
+            throw new Exception("Such room does not exist");
+        }
         if (_roomRepository.CheckRoomAndPassword(parameter.RoomName, parameter.Password))
         {
-            if (_cameraRepository.CreateCameraWithRoom(roomParamter) is not null)
+            if (roomParameter.OwnerLogin == userLogin)
             {
-                return new PostCameraResponse()
+                var newCamera = _cameraRepository.CreateCameraWithRoom(roomParameter);
+                if (newCamera is not null)
                 {
-                    CameraToken = "token",
-                    CameraUrl = "http://token"
-                };
+                    return new PostCameraResponse()
+                    {
+                        CameraToken = newCamera.Id.ToString(),
+                        CameraUrl = "https://cameratransmission.com/" + newCamera.Id.ToString()
+                    };
+                }
             }
         }
         throw new Exception("Can not add camera with room");
@@ -48,14 +59,36 @@ public class cameraController : ControllerBase
     [HttpDelete("{id}")]
     public IActionResult DeleteCamera(Guid id)
     {
-        throw new NotImplementedException();
+        var cameraToDelete = _cameraRepository.GetCameraById(id);
+        var userLogin = Request.GetUserLoginFromToken();
+        if (cameraToDelete is not null)
+        {
+            if (userLogin == cameraToDelete.Room!.OwnerLogin)
+            {
+                if (_cameraRepository.DeleteCamera((cameraToDelete)))
+                {
+                    return Ok("Camera has been deleted");
+                }
+            }
+        }
+        return BadRequest("Camera could not be deleted");
     }
 
     [Authorize]
     [HttpPut("{id}")]
     public IActionResult AcceptCamera(Guid id)
     {
-        throw new NotImplementedException();
+        var userLogin = Request.GetUserLoginFromToken();
+        var cameraToAccept = _cameraRepository.GetCameraById(id);
+        if (cameraToAccept is not null 
+            && userLogin == cameraToAccept.Room!.OwnerLogin)
+        {
+            if (_cameraRepository.AcceptCamera(cameraToAccept))
+            {
+                return Ok("Camera Accepted");
+            }
+        }
+        return BadRequest("Camera Could not be accepted");
     }
     
     /*[HttpPost("JoinRoom")]

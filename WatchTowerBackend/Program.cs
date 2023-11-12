@@ -37,7 +37,7 @@ builder.Services.AddSwaggerGen(options =>
         Type = SecuritySchemeType.Http
     }); 
     // TODO Uncomment this - probably add some authorization middleware that skips when [AllowAnonymous]
-    //options.OperationFilter<AuthorizationOperationFilter>();
+    options.OperationFilter<AuthorizationOperationFilter>();
     options.AddSecurityRequirement(new OpenApiSecurityRequirement
     {
         {

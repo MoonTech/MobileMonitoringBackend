@@ -6,13 +6,13 @@ using HostingEnvironmentExtensions = Microsoft.AspNetCore.Hosting.HostingEnviron
 
 namespace WatchTowerAPI.Domain.Models;
 
+
+
 [Table("Rooms")]
 [Index(nameof(RoomName), IsUnique = true)]
 public class RoomModel
 {
     [Key]
-    public Guid Id { get; set; }
-    
     public string RoomName { get; set; }
     
     public string? Password { get; set; }

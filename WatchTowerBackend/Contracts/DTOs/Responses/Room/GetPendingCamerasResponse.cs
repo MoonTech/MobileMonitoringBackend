@@ -5,5 +5,5 @@ namespace WatchTowerAPI.Contracts.DTOs.Responses.Room;
 
 public class GetPendingCamerasResponse
 {
-    public List<CameraWithoutPassword> PendingCameras { get; set; }
+    public List<CameraDTO> PendingCameras { get; set; }
 }

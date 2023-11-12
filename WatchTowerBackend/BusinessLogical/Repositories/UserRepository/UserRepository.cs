@@ -1,3 +1,4 @@
+using Microsoft.EntityFrameworkCore;
 using WatchTowerAPI.DataAccess.DbContexts;
 using WatchTowerAPI.Domain.Models;
 
@@ -25,6 +26,12 @@ public class UserRepository : BaseRepository, IUserRepository
     public UserModel? GetUser(string login, string password)
     {
         var user = context.Users.SingleOrDefault(user => user.Login == login && user.Password == password);
+        return user;
+    }
+
+    public UserModel? GetUserByLogin(string login)
+    {
+        var user = context.Users.Include("Rooms.Cameras").SingleOrDefault(user => user.Login == login);
         return user;
     }
 }
