@@ -59,23 +59,22 @@ public class roomController : ControllerBase
         throw new Exception("Could not add room");
     }
 
-    [Authorize]
-    [HttpPost("watch")]
-    public WatchResponse Watch()
+    [AllowAnonymous]
+    [HttpPost("watch/{roomName}")]
+    public WatchResponse Watch(string roomName)
     {
-        var login = Request.GetUserLoginFromToken();
-        var user = _userRepository.GetUserByLogin(login);
         var room = _roomRepository.GetRoomByName(roomName);
-        if (user is not null 
-            && room is not null
-            && room.OwnerLogin == login)
+        if (room is not null)
         {
-            var response = new GetPendingCamerasResponse();
+            var response = new WatchResponse()
+            {
+                RoomName = room.RoomName
+            };
             foreach (var camera in room.Cameras)
             {
-                if (camera.AcceptationState is null)
+                if (camera.AcceptationState == true)
                 {
-                    response.PendingCameras.Add(camera);
+                    response.ConnectedCameras.Add(camera);
                 }
             }
             return response;
