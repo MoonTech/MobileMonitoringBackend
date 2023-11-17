@@ -63,7 +63,24 @@ public class roomController : ControllerBase
     [HttpPost("watch")]
     public WatchResponse Watch()
     {
-        throw new NotImplementedException();
+        var login = Request.GetUserLoginFromToken();
+        var user = _userRepository.GetUserByLogin(login);
+        var room = _roomRepository.GetRoomByName(roomName);
+        if (user is not null 
+            && room is not null
+            && room.OwnerLogin == login)
+        {
+            var response = new GetPendingCamerasResponse();
+            foreach (var camera in room.Cameras)
+            {
+                if (camera.AcceptationState is null)
+                {
+                    response.PendingCameras.Add(camera);
+                }
+            }
+            return response;
+        }
+        throw new Exception("Cannot view pending cameras");
     }
 
     [Authorize]
@@ -103,6 +120,23 @@ public class roomController : ControllerBase
     [HttpGet("{roomName}")]
     public GetPendingCamerasResponse GetPendingCameras(string roomName)
     {
-        throw new NotImplementedException();
+        var login = Request.GetUserLoginFromToken();
+        var user = _userRepository.GetUserByLogin(login);
+        var room = _roomRepository.GetRoomByName(roomName);
+        if (user is not null 
+            && room is not null
+            && room.OwnerLogin == login)
+        {
+            var response = new GetPendingCamerasResponse();
+            foreach (var camera in room.Cameras)
+            {
+                if (camera.AcceptationState is null)
+                {
+                    response.PendingCameras.Add(camera);
+                }
+            }
+            return response;
+        }
+        throw new Exception("Cannot view pending cameras");
     }
 }

@@ -7,5 +7,5 @@ namespace WatchTowerBackend.Contracts.DTOs.ModelsWithoutPasswords;
 public class RoomDTO
 {
     public string RoomName { get; set; }
-    public IEnumerable<CameraDTO> Cameras { get; set; }
+    public IEnumerable<CameraDTO> Cameras { get; set; } = new List<CameraDTO>();
 }
