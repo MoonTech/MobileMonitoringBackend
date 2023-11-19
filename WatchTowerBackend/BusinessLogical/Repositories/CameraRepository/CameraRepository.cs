@@ -12,7 +12,7 @@ public class CameraRepository : BaseRepository, ICameraRepository
     {
         var roomEntity = context.Cameras.Add(new CameraModel()
         {
-            AcceptationState = null,
+            AcceptationState = false,
             Room = room
         });
         var newCamera = roomEntity.Entity;

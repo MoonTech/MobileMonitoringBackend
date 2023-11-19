@@ -129,7 +129,7 @@ public class roomController : ControllerBase
             var response = new GetPendingCamerasResponse();
             foreach (var camera in room.Cameras)
             {
-                if (camera.AcceptationState is null)
+                if (camera.AcceptationState == false)
                 {
                     response.PendingCameras.Add(camera);
                 }
