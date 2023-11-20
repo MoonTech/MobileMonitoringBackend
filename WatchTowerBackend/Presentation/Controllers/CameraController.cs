@@ -28,7 +28,7 @@ public class cameraController : ControllerBase
     }
 
     [HttpPost]
-    [Authorize]
+    [AllowAnonymous]
     public PostCameraResponse PostCamera(PostCameraParameter parameter)
     {
         var roomParameter = _roomRepository.GetRoomByName(parameter.RoomName);
