@@ -60,11 +60,13 @@ public class roomController : ControllerBase
     }
 
     [AllowAnonymous]
-    [HttpPost("watch/{roomName}")]
-    public WatchResponse Watch(string roomName)
+    [HttpPost("watch")]
+    public WatchResponse Watch(WatchParameter parameter)
     {
-        var room = _roomRepository.GetRoomByName(roomName);
-        if (room is not null)
+        var room = _roomRepository.GetRoomByName(parameter.RoomName);
+        var userLogin = Request.GetUserLoginFromToken();
+        if (room is not null && (_roomRepository.CheckRoomAndPassword(parameter.RoomName,parameter.Password))
+            || userLogin == room.OwnerLogin)
         {
             var response = new WatchResponse()
             {

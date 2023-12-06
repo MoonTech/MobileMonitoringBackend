@@ -37,19 +37,18 @@ public class cameraController : ControllerBase
         {
             throw new Exception("Such room does not exist");
         }
-        if (_roomRepository.CheckRoomAndPassword(parameter.RoomName, parameter.Password))
+        if (_roomRepository.CheckRoomAndPassword(parameter.RoomName, parameter.Password) 
+            || userLogin == roomParameter.OwnerLogin)
         {
-            if (roomParameter.OwnerLogin == userLogin)
+            var newCamera = _cameraRepository.CreateCameraWithRoom(
+                    parameter.CameraName, roomParameter);
+            if (newCamera is not null)
             {
-                var newCamera = _cameraRepository.CreateCameraWithRoom(roomParameter);
-                if (newCamera is not null)
+                return new PostCameraResponse()
                 {
-                    return new PostCameraResponse()
-                    {
-                        CameraToken = newCamera.Id.ToString(),
-                        CameraUrl = "https://cameratransmission.com/" + newCamera.Id.ToString()
-                    };
-                }
+                    CameraToken = newCamera.Id.ToString(),
+                    CameraUrl = "https://cameratransmission.com/" + newCamera.Id.ToString()
+                };
             }
         }
         throw new Exception("Can not add camera with room");

@@ -5,6 +5,7 @@ namespace WatchTowerBackend.Contracts.DTOs.ModelsWithoutPasswords;
 public class CameraDTO
 {
     public Guid Id { get; set; }
+    public string CameraName { get; set; }
     public bool AcceptationState { get; set; }
 
     public static implicit operator CameraDTO(CameraModel camera)
@@ -12,6 +13,7 @@ public class CameraDTO
         return new CameraDTO()
         {
             Id = camera.Id,
+            CameraName = camera.CameraName,
             AcceptationState = camera.AcceptationState
         };
     }

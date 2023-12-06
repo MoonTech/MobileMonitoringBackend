@@ -8,10 +8,11 @@ public class CameraRepository : BaseRepository, ICameraRepository
 {
     public CameraRepository(WatchTowerDbContext context) : base(context) {}
     
-    public CameraModel? CreateCameraWithRoom(RoomModel room)
+    public CameraModel? CreateCameraWithRoom(string cameraName, RoomModel room)
     {
         var roomEntity = context.Cameras.Add(new CameraModel()
         {
+            CameraName = cameraName,
             AcceptationState = false,
             Room = room
         });

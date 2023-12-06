@@ -3,17 +3,20 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using WatchTowerAPI.DataAccess.DbContexts;
 
 #nullable disable
 
-namespace WatchTowerAPI.DataAccess.Migrations
+namespace WatchTowerBackend.Migrations
 {
     [DbContext(typeof(WatchTowerDbContext))]
-    partial class WatchTowerDbContextModelSnapshot : ModelSnapshot
+    [Migration("20231205123633_Add CameraName")]
+    partial class AddCameraName
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -31,7 +34,7 @@ namespace WatchTowerAPI.DataAccess.Migrations
                     b.Property<bool>("AcceptationState")
                         .HasColumnType("bit");
 
-                    b.Property<string>("CameraName")
+                    b.Property<string>("Name")
                         .IsRequired()
                         .HasColumnType("nvarchar(450)");
 
@@ -41,7 +44,7 @@ namespace WatchTowerAPI.DataAccess.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("CameraName")
+                    b.HasIndex("Name")
                         .IsUnique();
 
                     b.HasIndex("RoomName");
