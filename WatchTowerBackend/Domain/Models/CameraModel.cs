@@ -15,6 +15,7 @@ public class CameraModel
     [DatabaseGenerated(DatabaseGeneratedOption.Identity)] 
     public Guid Id { get; set; }
     public string CameraName { get; set; }
+    public string CameraToken { get; set; }
     public bool AcceptationState { get; set; }
 
     [ForeignKey("RoomName")]

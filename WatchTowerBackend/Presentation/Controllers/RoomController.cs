@@ -1,6 +1,9 @@
 ﻿using System.Data;
 using System.IdentityModel.Tokens.Jwt;
+using System.Net;
 using System.Net.Http.Headers;
+using System.Security.Claims;
+using Azure;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -18,6 +21,8 @@ using WatchTowerBackend.BusinessLogical.Authentication;
 using WatchTowerBackend.BusinessLogical.Converters;
 using WatchTowerBackend.Contracts.DTOs.ModelsWithoutPasswords;
 using WatchTowerBackend.Contracts.DTOs.Parameters.Room;
+using WatchTowerBackend.Contracts.DTOs.Parameters.User;
+
 
 namespace WatchTowerAPI.Presentation.Controllers;
 
@@ -27,18 +32,18 @@ public class roomController : ControllerBase
 {
     private readonly IRoomRepository _roomRepository;
     private readonly IUserRepository _userRepository;
-    private readonly WatchTowerDbContext _dbContext;
+    private readonly IConfiguration _config;
 
     public roomController(IRoomRepository roomRepository,
         IUserRepository userRepository,
-        WatchTowerDbContext dbContext)
+        IConfiguration config)
     {
         _roomRepository = roomRepository;
         this._userRepository = userRepository;
-        _dbContext = dbContext;
+        _config = config;
     }
 
-    [Authorize]
+    [Authorize(AuthenticationSchemes = "ApiAuthenticationScheme")]
     [HttpPost]
     public PostRoomResponse PostRoom(PostRoomParameter parameter)
     {
@@ -59,14 +64,15 @@ public class roomController : ControllerBase
         throw new Exception("Could not add room");
     }
 
-    [AllowAnonymous]
+    [Authorize]
     [HttpPost("watch")]
     public WatchResponse Watch(WatchParameter parameter)
     {
         var room = _roomRepository.GetRoomByName(parameter.RoomName);
         var userLogin = Request.GetUserLoginFromToken();
-        if (room is not null && (_roomRepository.CheckRoomAndPassword(parameter.RoomName,parameter.Password))
-            || userLogin == room.OwnerLogin)
+        var roomName = Request.GetRoomNameFromToken();
+        if ((room is not null && userLogin is not null && userLogin == room.OwnerLogin)
+            || (roomName is not null))
         {
             var response = new WatchResponse()
             {
@@ -81,10 +87,12 @@ public class roomController : ControllerBase
             }
             return response;
         }
-        throw new Exception("Cannot view pending cameras");
+
+        throw new Exception("Can not view pending cameras");
+
     }
 
-    [Authorize]
+    [Authorize(AuthenticationSchemes = "ApiAuthenticationScheme")]
     [HttpDelete("{roomName}")]
     public IActionResult DeleteRoom(string roomName)
     {
@@ -101,7 +109,7 @@ public class roomController : ControllerBase
         return BadRequest("Could not delete room");
     }
 
-    [Authorize]
+    [Authorize(AuthenticationSchemes = "ApiAuthenticationScheme")]
     [HttpGet]
     public GetAllRoomsResponse GetAllRooms()
     {
@@ -117,7 +125,7 @@ public class roomController : ControllerBase
         throw new Exception("User does not exist in database");
     }
 
-    [Authorize]
+    [Authorize(AuthenticationSchemes = "ApiAuthenticationScheme")]
     [HttpGet("{roomName}")]
     public GetPendingCamerasResponse GetPendingCameras(string roomName)
     {
@@ -139,5 +147,39 @@ public class roomController : ControllerBase
             return response;
         }
         throw new Exception("Cannot view pending cameras");
+    }
+
+    [AllowAnonymous]
+    [HttpPost("token")]
+    public GenerateTokenResponse GenerateToken(GenerateTokenParameter parameter)
+    {
+        var room = AuthenticateRoom(parameter);
+        if (room is not null)
+        {
+            var token = GenerateRoomToken(room);
+            return new()
+            {
+                AccessToken = token
+            };
+        }
+        throw new RequestFailedException("Authorization failed");
+    }
+    
+    // Additional Methods
+    private string GenerateRoomToken(RoomModel room)
+    {
+        return JwtSecurityTokenExtension.GenerateToken(
+            _config,
+            "Jwt:RoomKey",
+            new[]
+            {
+                new Claim("RoomName", room.RoomName),
+                new Claim("type", "RoomAuth")
+            });
+    }
+    private RoomModel? AuthenticateRoom(GenerateTokenParameter room)
+    {
+        var roomFromDb = _roomRepository.GetRoom(room.RoomName, room.Password);
+        return roomFromDb;
     }
 }

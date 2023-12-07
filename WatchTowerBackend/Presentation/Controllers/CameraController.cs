@@ -15,20 +15,20 @@ namespace WatchTowerAPI.Presentation.Controllers;
 
 [ApiController]
 [Route("/[controller]")]
-public class cameraController : ControllerBase
+public class CameraController : ControllerBase
 {
     private readonly ICameraRepository _cameraRepository;
     private readonly IRoomRepository _roomRepository;
 
-    public cameraController(ICameraRepository cameraRepository,
+    public CameraController(ICameraRepository cameraRepository,
         IRoomRepository roomRepository)
     {
         _cameraRepository = cameraRepository;
         _roomRepository = roomRepository;
     }
 
+    [Authorize(AuthenticationSchemes = "ApiAuthenticationScheme")]
     [HttpPost]
-    [AllowAnonymous]
     public PostCameraResponse PostCamera(PostCameraParameter parameter)
     {
         var roomParameter = _roomRepository.GetRoomByName(parameter.RoomName);
@@ -44,17 +44,20 @@ public class cameraController : ControllerBase
                     parameter.CameraName, roomParameter);
             if (newCamera is not null)
             {
+                if (userLogin == roomParameter.OwnerLogin)
+                {
+                    _cameraRepository.AcceptCamera(newCamera);
+                }
                 return new PostCameraResponse()
                 {
-                    CameraToken = newCamera.Id.ToString(),
-                    CameraUrl = "https://cameratransmission.com/" + newCamera.Id.ToString()
+                    CameraToken = newCamera.CameraToken,
                 };
             }
         }
         throw new Exception("Can not add camera with room");
     }
     
-    [Authorize]
+    [Authorize(AuthenticationSchemes = "ApiAuthenticationScheme")]
     [HttpDelete("{id}")]
     public IActionResult DeleteCamera(Guid id)
     {
@@ -73,7 +76,7 @@ public class cameraController : ControllerBase
         return BadRequest("Camera could not be deleted");
     }
 
-    [Authorize]
+    [Authorize(AuthenticationSchemes = "ApiAuthenticationScheme")]
     [HttpPut("{id}")]
     public IActionResult AcceptCamera(Guid id)
     {
@@ -89,19 +92,4 @@ public class cameraController : ControllerBase
         }
         return BadRequest("Camera Could not be accepted");
     }
-    
-    /*[HttpPost("JoinRoom")]
-    public bool JoinRoom(JoinRoomParameter parameter)
-    {
-        return _cameraRepository.AssignNewRoom(
-            parameter.CameraId,
-            _roomRepository.GetRoomById(parameter.RoomId));
-    }
-
-    [HttpGet("example")]
-    public string Example()
-    {
-        return "example";
-    }*/
-
 }

@@ -13,6 +13,7 @@ public class CameraRepository : BaseRepository, ICameraRepository
         var roomEntity = context.Cameras.Add(new CameraModel()
         {
             CameraName = cameraName,
+            CameraToken = CreateCameraToken(10),
             AcceptationState = false,
             Room = room
         });
@@ -65,5 +66,24 @@ public class CameraRepository : BaseRepository, ICameraRepository
         var camera = GetCameraById(id);
         camera.Room = room;
         return SaveChanges();
+    }
+
+    private string CreateCameraToken(int length)
+    {
+        
+        Random random = new Random();
+        const string chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+        bool foundUniqueToken = false;
+        string token;
+        do
+        {
+            token = new string(Enumerable.Repeat(chars, length)
+                .Select(s => s[random.Next(s.Length)]).ToArray());
+            if (context.Cameras.SingleOrDefault(c => c.CameraToken == token) is null)
+            {
+                foundUniqueToken = true;
+            }
+        } while (!foundUniqueToken);
+        return token;
     }
 }

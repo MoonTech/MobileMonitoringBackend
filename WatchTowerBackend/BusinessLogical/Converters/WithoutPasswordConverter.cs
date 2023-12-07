@@ -53,6 +53,8 @@ public static class WithoutPasswordConverter
             result.Add(new()
             {
                 Id = camera.Id,
+                CameraName = camera.CameraName,
+                CameraToken = camera.CameraToken,
                 AcceptationState = camera.AcceptationState
             });
         }

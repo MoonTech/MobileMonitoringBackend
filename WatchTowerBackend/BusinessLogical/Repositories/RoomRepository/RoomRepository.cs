@@ -1,6 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using WatchTowerAPI.DataAccess.DbContexts;
 using WatchTowerAPI.Domain.Models;
+using WatchTowerBackend.BusinessLogical.Utils;
 using WatchTowerBackend.Contracts.DTOs.ModelsWithoutPasswords;
 
 namespace WatchTowerAPI.BusinessLogical.Repositories.RoomRepository;
@@ -15,7 +16,7 @@ public class RoomRepository : BaseRepository, IRoomRepository
             new RoomModel()
             {
                 RoomName = name,
-                Password = password,
+                Password = PasswordHash.HashPassword(password),
                 Owner = owner
             })
             .Entity;
@@ -31,9 +32,9 @@ public class RoomRepository : BaseRepository, IRoomRepository
 
     public RoomModel? GetRoom(string name, string password)
     {
-        var result = context.Rooms.Include(room => room.Cameras).SingleOrDefault(room => room.RoomName == name
-                                                           && room.Password == password);
-        if (result is not null)
+        var result = context.Rooms.Include(room => room.Cameras)
+            .SingleOrDefault(room => room.RoomName == name);
+        if (result is not null && PasswordHash.VerifyPassword(password, result.Password))
         {
             return result;
         }
@@ -74,13 +75,8 @@ public class RoomRepository : BaseRepository, IRoomRepository
     public bool CheckRoomAndPassword(string roomName, string? password)
     {
         var roomToCheck = context.Rooms.Find(roomName);
-        if (roomToCheck?.Password == password || roomToCheck?.Password == null) // TODO ? !!!
-        {
-            return true;
-        }
-        else
-        {
-            return false;
-        }
+        return PasswordHash.VerifyPassword(password, roomToCheck.Password);
     }
+
+
 }

@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.IdentityModel.Tokens;
 using WatchTowerAPI.BusinessLogical.Repositories.UserRepository;
 using WatchTowerAPI.Domain.Models;
+using WatchTowerBackend.BusinessLogical.Authentication;
 using WatchTowerBackend.Contracts.DTOs.Parameters.User;
 using WatchTowerBackend.Contracts.DTOs.Responses.User;
 
@@ -36,7 +37,7 @@ public class userController : ControllerBase
         {
             return new()
             {
-                AccessToken = GenerateToken(newUser)
+                AccessToken = GenerateUserToken(newUser)
             };
         }
         throw new Exception("Can not add user");
@@ -46,10 +47,10 @@ public class userController : ControllerBase
     [HttpPost("login")]
     public LoginUserResponse Login(LoginUserParameter parameter)
     {
-        var user = Authenticate(parameter);
+        var user = AuthenticateUser(parameter);
         if (user != null)
         {
-            var token = GenerateToken(user);
+            var token = GenerateUserToken(user);
             return new()
             {
                 AccessToken = token
@@ -58,7 +59,7 @@ public class userController : ControllerBase
         throw new RequestFailedException("Authorization failed");
     }
 
-    [Authorize]
+    [Authorize(AuthenticationSchemes = "ApiAuthenticationScheme")]
     [HttpDelete("logout")]
     public IActionResult Logout()
     {
@@ -66,25 +67,18 @@ public class userController : ControllerBase
     }
     
     // Additional Methods
-    private string GenerateToken(UserModel user) // TODO Improve token generation
+    private string GenerateUserToken(UserModel user)
     {
-        var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_config["Jwt:Key"]));
-        var credentials = new SigningCredentials(securityKey, SecurityAlgorithms.HmacSha256);
-        var claims = new[]
-        {
-            new Claim("login",user.Login),
-            new Claim("role", "normal user") //TODO Should we add roles to our database?
-        };
-        
-        var token = new JwtSecurityToken(_config["Jwt:Issuer"],
-            _config["Jwt:Audience"],
-            claims,
-            expires: DateTime.Now.AddMinutes(60),
-            signingCredentials: credentials);
-        
-        return new JwtSecurityTokenHandler().WriteToken(token);
+        return JwtSecurityTokenExtension.GenerateToken(
+            _config, 
+            "Jwt:ApiKey",
+            new[]
+            {
+                new Claim("login", user.Login),
+                new Claim("type", "TokenAPI")
+            });
     }
-    private UserModel? Authenticate(LoginUserParameter user)
+    private UserModel? AuthenticateUser(LoginUserParameter user)
     {
         var userFromDb = _userRepository.GetUser(user.Login, user.Password);
         return userFromDb;

@@ -12,13 +12,23 @@ public static class HttpRequestExtension
         var accessToken = parsedAuth.Parameter;
         return accessToken;
     }
-    
-    public static string GetUserLoginFromToken(this HttpRequest request)
+
+    public static string GetClaimFromToken(this HttpRequest request, string claimType)
     {
         var token = request.GetToken();
         var handler = new JwtSecurityTokenHandler();
         var jwtSecurityToken = handler.ReadJwtToken(token);
-        var login = jwtSecurityToken.GetLogin();
+        var login = jwtSecurityToken.GetClaim(claimType);
         return login;
+    }
+    
+    public static string GetUserLoginFromToken(this HttpRequest request)
+    {
+        return request.GetClaimFromToken("login");
+    }
+    
+    public static string GetRoomNameFromToken(this HttpRequest request)
+    {
+        return request.GetClaimFromToken("RoomName");
     }
 }

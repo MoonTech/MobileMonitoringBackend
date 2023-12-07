@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using WatchTowerAPI.DataAccess.DbContexts;
 using WatchTowerAPI.Domain.Models;
+using WatchTowerBackend.BusinessLogical.Utils;
 
 namespace WatchTowerAPI.BusinessLogical.Repositories.UserRepository;
 
@@ -13,7 +14,7 @@ public class UserRepository : BaseRepository, IUserRepository
         var newUser = new UserModel()
         {
             Login = login,
-            Password = password
+            Password = PasswordHash.HashPassword(password)
         };
         context.Users.Add(newUser);
         if (SaveChanges())
@@ -25,8 +26,12 @@ public class UserRepository : BaseRepository, IUserRepository
 
     public UserModel? GetUser(string login, string password)
     {
-        var user = context.Users.SingleOrDefault(user => user.Login == login && user.Password == password);
-        return user;
+        var user = context.Users.SingleOrDefault(user => user.Login == login);
+        if (PasswordHash.VerifyPassword(password, user.Password))
+        {
+            return user;
+        }
+        return null;
     }
 
     public UserModel? GetUserByLogin(string login)
