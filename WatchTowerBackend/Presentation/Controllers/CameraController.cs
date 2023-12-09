@@ -15,12 +15,12 @@ namespace WatchTowerAPI.Presentation.Controllers;
 
 [ApiController]
 [Route("/[controller]")]
-public class CameraController : ControllerBase
+public class cameraController : ControllerBase
 {
     private readonly ICameraRepository _cameraRepository;
     private readonly IRoomRepository _roomRepository;
 
-    public CameraController(ICameraRepository cameraRepository,
+    public cameraController(ICameraRepository cameraRepository,
         IRoomRepository roomRepository)
     {
         _cameraRepository = cameraRepository;
