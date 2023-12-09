@@ -50,7 +50,7 @@ public class cameraController : ControllerBase
                 }
                 return new PostCameraResponse()
                 {
-                    CameraToken = newCamera.CameraToken,
+                    Id = newCamera.Id
                 };
             }
         }
