@@ -37,8 +37,8 @@ public class cameraController : ControllerBase
         {
             throw new Exception("Such room does not exist");
         }
-        if (_roomRepository.CheckRoomAndPassword(parameter.RoomName, parameter.Password) 
-            || userLogin == roomParameter.OwnerLogin)
+        if (userLogin == roomParameter.OwnerLogin
+            || _roomRepository.CheckRoomAndPassword(parameter.RoomName, parameter.Password))
         {
             var newCamera = _cameraRepository.CreateCameraWithRoom(
                     parameter.CameraName, roomParameter);
