@@ -14,6 +14,7 @@ using Swashbuckle.AspNetCore.Filters;
 using WatchTowerAPI.BusinessLogical.Repositories.CameraRepository;
 using WatchTowerAPI.BusinessLogical.Repositories.RoomRepository;
 using WatchTowerAPI.BusinessLogical.Repositories.UserRepository;
+using WatchTowerBackend.BusinessLogical.Services;
 using WatchTowerBackend.Presentation.SwaggerConfiguration;
 
 
@@ -25,6 +26,7 @@ builder.Services.AddControllers();
 builder.Services.AddTransient<IRoomRepository, RoomRepository>();
 builder.Services.AddTransient<ICameraRepository, CameraRepository>();
 builder.Services.AddTransient<IUserRepository, UserRepository>();
+builder.Services.AddSingleton<RecordingCamerasCache>();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(options => 
 {
