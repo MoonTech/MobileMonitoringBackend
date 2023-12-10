@@ -54,19 +54,7 @@ public class CameraRepository : BaseRepository, ICameraRepository
         camera.AcceptationState = true;
         return SaveChanges();
     }
-
-    public bool RejectCamera(CameraModel camera)
-    {
-        camera.AcceptationState = false;
-        return SaveChanges();
-    }
-
-    public bool AssignNewRoom(Guid id, RoomModel room)
-    {
-        var camera = GetCameraById(id);
-        camera.Room = room;
-        return SaveChanges();
-    }
+    
 
     private string CreateCameraToken(int length)
     {

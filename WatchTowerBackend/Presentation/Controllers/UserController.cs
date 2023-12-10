@@ -83,4 +83,5 @@ public class userController : ControllerBase
         var userFromDb = _userRepository.GetUser(user.Login, user.Password);
         return userFromDb;
     }
+    
 }

@@ -9,11 +9,11 @@ using WatchTowerBackendTests.Utils;
 
 namespace WatchTowerBackendTests.Room;
 
-public class RoomRepositoryTest
+public class RoomRepositoryTests
 {
     private readonly IRoomRepository _roomRepository;
 
-    public RoomRepositoryTest()
+    public RoomRepositoryTests()
     {
         _roomRepository = RoomRepositoryMock.SetRoomRepository();
     }
@@ -97,8 +97,11 @@ public static class RoomRepositoryMock
     {
         var mockDbContext = RepositoryMockTest.CreateMockDbContext();
         var roomRepository = new RoomRepository(mockDbContext);
-        var userRepository = new UserRepository(mockDbContext);
-        userRepository.AddUser("Login", "Password");
+        roomRepository.CreateRoom("NewRoom", "NewPassword", new UserModel()
+        {
+            Login = "NewUserLogin",
+            Password = "NewUserPassword"
+        });
         return roomRepository;
     }
 }

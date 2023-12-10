@@ -25,7 +25,6 @@
     </ItemGroup>
 
     <ItemGroup>
-      <Folder Include="Camera\" />
       <Folder Include="VideoServer\" />
     </ItemGroup>
 
