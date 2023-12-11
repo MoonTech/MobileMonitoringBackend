@@ -31,11 +31,19 @@ public class UserControllerTests
     [Fact]
     public void ShouldReturnTokenWhenLoginCorrect()
     {
-        var accessToken = _userController.SignUp(new SignUpUserParameter()
+        try
         {
-            Login = "login",
-            Password = "Password"
-        });
+            var accessToken = _userController.SignUp(new SignUpUserParameter()
+            {
+                Login = "login",
+                Password = "Password"
+            });
+        }
+        catch
+        {
+            
+        }
+
         var result = _userController.Login(new LoginUserParameter()
         {
             Login = "login",

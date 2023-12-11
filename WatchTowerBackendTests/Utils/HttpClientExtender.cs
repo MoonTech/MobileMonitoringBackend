@@ -42,7 +42,7 @@ public static class HttpClientExtender
         return result;
     }
     public static async Task<HttpStatusCode> SendRequestNoAnswerBody(this HttpClient httpClient, RequestType requestType, 
-        string endpoint, object? bodyObject=null, string? token=null)
+        string endpoint, object? bodyObject=null, string? token=null, string firstPutJsonParameterxD="id")
     {
         HttpResponseMessage? responseMessage = new();
 
@@ -69,6 +69,15 @@ public static class HttpClientExtender
             {
                 var body = JsonContent.Create(bodyObject);
                 responseMessage = await httpClient.DeleteAsync(endpoint,new CancellationToken());
+                break;
+            }
+            case RequestType.Put:
+            {
+                Dictionary<string, string> parameters = new();
+                HttpContent encodedContent;
+                parameters = new Dictionary<string, string> { { firstPutJsonParameterxD, bodyObject.ToString() } };
+                encodedContent = new FormUrlEncodedContent(parameters);
+                responseMessage = await httpClient.PutAsync(endpoint, encodedContent);
                 break;
             }
         }

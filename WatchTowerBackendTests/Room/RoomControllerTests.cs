@@ -115,14 +115,15 @@ public class RoomControllerTests
         }
     }
     
-    public static async Task<string> GetUserToken(HttpClient httpClient)
+    public static async Task<string> GetUserToken(HttpClient httpClient, 
+        string userLogin="UserLogin", string userPassword="UserPassword")
     {
         try
         {
             var userToken = (await httpClient.SendRequest<SignUpUserResponse>(RequestType.Post, "user", new SignUpUserParameter()
             {
-                Login = "UserLogin",
-                Password = "UserPassword"
+                Login = userLogin,
+                Password = userPassword
             })).AccessToken;
             return userToken;
         }
