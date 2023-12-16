@@ -21,7 +21,7 @@ using WatchTowerBackend.Presentation.SwaggerConfiguration;
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddDbContext<WatchTowerDbContext>(
-    options => options.UseSqlServer(builder.Configuration.GetConnectionString("LocalJW")));
+    options => options.UseSqlServer(builder.Configuration.GetConnectionString("DockerApplyMigrations")));
 builder.Services.AddControllers();
 builder.Services.AddTransient<IRoomRepository, RoomRepository>();
 builder.Services.AddTransient<ICameraRepository, CameraRepository>();
@@ -112,10 +112,21 @@ app.UseAuthorization();
 
 app.MapControllers();
 
-using (var scope = app.Services.CreateScope())
+while (true)
 {
-    var db = scope.ServiceProvider.GetRequiredService<WatchTowerDbContext>();
-    db.Database.Migrate();
+    try
+    {
+        using (var scope = app.Services.CreateScope())
+        {
+            var db = scope.ServiceProvider.GetRequiredService<WatchTowerDbContext>();
+            db.Database.Migrate();
+            break;
+        }
+    }
+    catch (Exception e)
+    {
+        Console.WriteLine(e);
+    }
 }
 
 app.Run();
