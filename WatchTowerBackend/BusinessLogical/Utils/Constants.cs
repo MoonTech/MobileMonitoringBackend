@@ -1,14 +1,19 @@
 namespace WatchTowerBackend.BusinessLogical.Utils;
 
 public static class Constants
+
 {
-    public static string StreamBaseUrl = "rtmp://10.0.2.2:1935/live/";
-    public static string WatchBaseUrl = "http://10.0.2.2:8080/hls/";
-    public static string RecordBaseUrl = "http://localhost:8080/";
+    public static readonly string VideoServerHost = "localhost";
+
+    public static string StreamBaseUrl = $"rtmp://{VideoServerHost}:1936/live/";
+    public static string WatchBaseUrl = $"http://{VideoServerHost}:8081/live/";
+    public static string RecordBaseUrl = $"http://{VideoServerHost}:8080/";
+
     public static string StartRecordingEndpoint(string cameraToken)
     {
         return $"control/record/start?app=live&name={cameraToken}&rec=rec1";
     }
+
     public static string StopRecordingEndpoint(string cameraToken)
     {
         return $"control/record/stop?app=live&name={cameraToken}&rec=rec1";

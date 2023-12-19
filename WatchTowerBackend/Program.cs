@@ -1,16 +1,12 @@
 using System.IdentityModel.Tokens.Jwt;
-using System.Net;
 using System.Text;
-using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Mvc.Authorization;
 using WatchTowerAPI.DataAccess.DbContexts;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.Net.Http.Headers;
 using Microsoft.OpenApi.Models;
-using Swashbuckle.AspNetCore.Filters;
 using WatchTowerAPI.BusinessLogical.Repositories.CameraRepository;
 using WatchTowerAPI.BusinessLogical.Repositories.RoomRepository;
 using WatchTowerAPI.BusinessLogical.Repositories.UserRepository;
@@ -20,15 +16,22 @@ using WatchTowerBackend.Presentation.SwaggerConfiguration;
 
 var builder = WebApplication.CreateBuilder(args);
 
+var environment = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT");
+builder.Configuration
+    .AddJsonFile($"appsettings.json", true, true)
+    .AddJsonFile($"appsettings.{environment}.json", true, true)
+    .AddEnvironmentVariables();
+
 builder.Services.AddDbContext<WatchTowerDbContext>(
-    options => options.UseSqlServer(builder.Configuration.GetConnectionString("DockerApplyMigrations")));
+    options => options.UseSqlServer(builder.Configuration.GetConnectionString("Default")));
+
 builder.Services.AddControllers();
 builder.Services.AddTransient<IRoomRepository, RoomRepository>();
 builder.Services.AddTransient<ICameraRepository, CameraRepository>();
 builder.Services.AddTransient<IUserRepository, UserRepository>();
 builder.Services.AddSingleton<RecordingCamerasCache>();
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen(options => 
+builder.Services.AddSwaggerGen(options =>
 {
     options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
     {
@@ -46,23 +49,27 @@ builder.Services.AddAuthentication(options =>
 {
     options.DefaultScheme = "MultiAuthSchemes";
     options.DefaultChallengeScheme = "MultiAuthSchemes";
-}).AddJwtBearer("ApiAuthenticationScheme", options => {
-    options.TokenValidationParameters = new TokenValidationParameters {
+}).AddJwtBearer("ApiAuthenticationScheme", options =>
+{
+    options.TokenValidationParameters = new TokenValidationParameters
+    {
         ValidateIssuer = false,
         ValidateAudience = false,
         ValidateLifetime = true,
         ValidateIssuerSigningKey = true,
         IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["Jwt:ApiKey"]))
     };
-}).AddJwtBearer("RoomAuthenticationScheme", options => {
-    options.TokenValidationParameters = new TokenValidationParameters {
+}).AddJwtBearer("RoomAuthenticationScheme", options =>
+{
+    options.TokenValidationParameters = new TokenValidationParameters
+    {
         ValidateIssuer = false,
         ValidateAudience = false,
         ValidateLifetime = true,
         ValidateIssuerSigningKey = true,
         IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["Jwt:RoomKey"]))
     };
-}).AddPolicyScheme("MultiAuthSchemes",JwtBearerDefaults.AuthenticationScheme, options =>
+}).AddPolicyScheme("MultiAuthSchemes", JwtBearerDefaults.AuthenticationScheme, options =>
 {
     options.ForwardDefaultSelector = context =>
     {
@@ -73,11 +80,11 @@ builder.Services.AddAuthentication(options =>
             var jwtHandler = new JwtSecurityTokenHandler();
             var rawToken = jwtHandler.ReadJwtToken(token);
             return (rawToken.Claims.SingleOrDefault(c => c.Value == "TokenAPI") is not null)
-                ? "ApiAuthenticationScheme" : "RoomAuthenticationScheme";
+                ? "ApiAuthenticationScheme"
+                : "RoomAuthenticationScheme";
         }
 
         return "RoomAuthenticationScheme";
-        
     };
 });
 
@@ -98,8 +105,8 @@ var app = builder.Build();
 // Configure the HTTP request pipeline.
 //if (app.Environment.IsDevelopment())
 //{
-    app.UseSwagger();
-    app.UseSwaggerUI();
+app.UseSwagger();
+app.UseSwaggerUI();
 //}
 
 //app.UseHttpsRedirection();
@@ -111,17 +118,14 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
-
 while (true)
 {
     try
     {
-        using (var scope = app.Services.CreateScope())
-        {
-            var db = scope.ServiceProvider.GetRequiredService<WatchTowerDbContext>();
-            db.Database.Migrate();
-            break;
-        }
+        using var scope = app.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<WatchTowerDbContext>();
+        db.Database.Migrate();
+        break;
     }
     catch (Exception e)
     {

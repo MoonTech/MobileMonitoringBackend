@@ -9,7 +9,7 @@ public class WatchCameraDTO : CameraDTO
     {
         get
         {
-            return Constants.WatchBaseUrl + CameraToken + ".m3u8";
+            return Constants.WatchBaseUrl + CameraToken + ".flv";
         }
     }
     
