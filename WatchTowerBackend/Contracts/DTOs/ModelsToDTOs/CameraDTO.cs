@@ -1,6 +1,6 @@
 using WatchTowerAPI.Domain.Models;
 
-namespace WatchTowerBackend.Contracts.DTOs.ModelsWithoutPasswords;
+namespace WatchTowerBackend.Contracts.DTOs.ModelsToDTOs;
 
 public class CameraDTO
 {

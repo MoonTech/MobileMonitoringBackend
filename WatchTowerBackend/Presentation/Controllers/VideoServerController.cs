@@ -6,7 +6,10 @@ using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.VisualBasic;
 using WatchTowerAPI.BusinessLogical.Repositories.CameraRepository;
+using WatchTowerAPI.BusinessLogical.Repositories.RecordingRepository;
+using WatchTowerAPI.BusinessLogical.Repositories.RoomRepository;
 using WatchTowerAPI.BusinessLogical.Repositories.UserRepository;
+using WatchTowerAPI.Domain.Models;
 using WatchTowerBackend.BusinessLogical.Authentication;
 using WatchTowerBackend.BusinessLogical.Services;
 using WatchTowerBackend.Contracts.DTOs.Parameters.VideoServer;
@@ -20,27 +23,28 @@ namespace WatchTowerAPI.Presentation.Controllers;
 public class videoServerController : ControllerBase
 {
     private readonly ICameraRepository _cameraRepository;
+    private readonly IRecordingRepository _recordingRepository;
+    private readonly IRoomRepository _roomRepository;
     private readonly IConfiguration _config;
     private readonly HttpClient _httpClient;
     private readonly RecordingCamerasCache _recordingCamerasCache;
 
-    public videoServerController(ICameraRepository cameraRepository,
-        IConfiguration config, RecordingCamerasCache recordingCamerasCache)
+    public videoServerController(
+        ICameraRepository cameraRepository,
+        IRecordingRepository recordingRepository,
+        IRoomRepository roomRepository,
+        IConfiguration config, 
+        RecordingCamerasCache recordingCamerasCache)
     {
         _cameraRepository = cameraRepository;
+        _recordingRepository = recordingRepository;
+        _roomRepository = roomRepository;
         _config = config;
         _httpClient = new HttpClient();
         _httpClient.BaseAddress = new (Constants.RecordBaseUrl);
         _recordingCamerasCache = recordingCamerasCache;
     }
-
-    /*[AllowAnonymous]
-    [HttpGet]
-    public IActionResult Auth()
-    {
-        return Ok();
-    }*/
-
+    
     [AllowAnonymous]
     [HttpPost("streamUrl")]
     public StreamUrlResponse getStreamUrl(StreamUrlParameter parameter)
@@ -89,13 +93,17 @@ public class videoServerController : ControllerBase
             if (response.StatusCode == HttpStatusCode.OK)
             {
                 _recordingCamerasCache.Remove(parameter.CameraId);
-                var videoPath = await response.Content.ReadAsStringAsync();
+                var videoPath = (await response.Content.ReadAsStringAsync()).Trim('/');
                 var fileResponseMessage = await _httpClient.GetAsync(videoPath);
                 var file = await fileResponseMessage.Content.ReadAsStreamAsync();
-                string fileName = parameter.CameraId + "-"
-                                                     + DateTime.Now.ToString("dd-MM-yyyy-HH:mm:ss")
-                                                     + ".flv";
-                return File(file, "application/force-download", fileName);
+                string fileName = CreateFileName(camera.RoomName, camera.CameraName);
+                var videoUrl = CreateRecordingUrl(videoPath);
+                var recording = _recordingRepository.AddRecording(fileName, videoUrl, camera.Room);
+                if (recording is not null)
+                {
+                    return File(file, "application/force-download", fileName);
+                }
+                return BadRequest("Could not save a recording");
             }
             return BadRequest("Could not stop recording or download a file");
         }
@@ -109,5 +117,60 @@ public class videoServerController : ControllerBase
         // returns true if camera is not transmitting 
         return _recordingCamerasCache.Contains(id) ? Ok(false) : Ok(true);
     }
+
+    [Authorize]
+    [HttpGet("record/{recordingName}")]
+    public async Task<IActionResult> DownloadRecording(string recordingName)
+    {
+        var recording = _recordingRepository.GetRecording(recordingName);
+        if (recording is not null)
+        {
+            var room = _roomRepository.GetRoomByName(recording.RoomName);
+            if (AuthorizeRoomSpectator(room))
+            {
+                var fileResponseMessage = await _httpClient.GetAsync(TrimRecordingUrl(recording.Url));
+                var file = await fileResponseMessage.Content.ReadAsStreamAsync();
+                if (recording is not null)
+                {
+                    return File(file, "application/force-download", recordingName);
+                }
+                return BadRequest("Could not save a recording");
+            }
+        }
+
+        throw new Exception("Could not download recordings");
+    }
     
+    private bool AuthorizeRoomSpectator(RoomModel room)
+    {
+        var userLogin = Request.GetUserLoginFromToken();
+        var roomName = Request.GetRoomNameFromToken();
+        return (room is not null && userLogin is not null && userLogin == room.OwnerLogin)
+               || (roomName is not null);
+    }
+
+    private string CreateFileName(string roomName, string cameraName)
+    {
+        return roomName 
+               + "-" 
+               + cameraName 
+               + "-"
+               + DateTime.Now.ToString("dd-MM-yyyy-HH:mm:ss")
+               + ".flv";
+    }
+
+    private string CreateRecordingUrl(string fileName)
+    {
+        return Constants.RecordBaseUrl + fileName;
+    }
+
+    private string TrimRecordingUrl(string recordingUrl)
+    {
+        var baseAddress = Constants.RecordBaseUrl;
+        int index = recordingUrl.IndexOf(baseAddress);
+        string cleanPath = (index < 0)
+            ? recordingUrl
+            : recordingUrl.Remove(index, baseAddress.Length);
+        return cleanPath;
+    }
 }

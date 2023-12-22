@@ -8,6 +8,7 @@ using Microsoft.IdentityModel.Tokens;
 using Microsoft.Net.Http.Headers;
 using Microsoft.OpenApi.Models;
 using WatchTowerAPI.BusinessLogical.Repositories.CameraRepository;
+using WatchTowerAPI.BusinessLogical.Repositories.RecordingRepository;
 using WatchTowerAPI.BusinessLogical.Repositories.RoomRepository;
 using WatchTowerAPI.BusinessLogical.Repositories.UserRepository;
 using WatchTowerBackend.BusinessLogical.Services;
@@ -29,6 +30,7 @@ builder.Services.AddControllers();
 builder.Services.AddTransient<IRoomRepository, RoomRepository>();
 builder.Services.AddTransient<ICameraRepository, CameraRepository>();
 builder.Services.AddTransient<IUserRepository, UserRepository>();
+builder.Services.AddTransient<IRecordingRepository, RecordingRepository>();
 builder.Services.AddSingleton<RecordingCamerasCache>();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(options =>

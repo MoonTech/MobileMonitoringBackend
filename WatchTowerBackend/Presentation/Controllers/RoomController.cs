@@ -1,4 +1,5 @@
-﻿using System.Data;
+﻿using System.ComponentModel.DataAnnotations;
+using System.Data;
 using System.IdentityModel.Tokens.Jwt;
 using System.Net;
 using System.Net.Http.Headers;
@@ -9,6 +10,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Net.Http.Headers;
+using WatchTowerAPI.BusinessLogical.Repositories.RecordingRepository;
 using WatchTowerAPI.BusinessLogical.Repositories.RoomRepository;
 using WatchTowerAPI.BusinessLogical.Repositories.UserRepository;
 using WatchTowerAPI.Contracts.DTOs.Parameters;
@@ -19,7 +21,6 @@ using WatchTowerAPI.DataAccess.DbContexts;
 using WatchTowerAPI.Domain.Models;
 using WatchTowerBackend.BusinessLogical.Authentication;
 using WatchTowerBackend.BusinessLogical.Converters;
-using WatchTowerBackend.Contracts.DTOs.ModelsWithoutPasswords;
 using WatchTowerBackend.Contracts.DTOs.Parameters.Room;
 using WatchTowerBackend.Contracts.DTOs.Parameters.User;
 
@@ -32,14 +33,17 @@ public class roomController : ControllerBase
 {
     private readonly IRoomRepository _roomRepository;
     private readonly IUserRepository _userRepository;
+    private readonly IRecordingRepository _recordingRepository;
     private readonly IConfiguration _config;
 
     public roomController(IRoomRepository roomRepository,
         IUserRepository userRepository,
+        IRecordingRepository recordingRepository,
         IConfiguration config)
     {
         _roomRepository = roomRepository;
-        this._userRepository = userRepository;
+        _userRepository = userRepository;
+        _recordingRepository = recordingRepository;
         _config = config;
     }
 
@@ -69,10 +73,7 @@ public class roomController : ControllerBase
     public WatchResponse Watch(WatchParameter parameter)
     {
         var room = _roomRepository.GetRoomByName(parameter.RoomName);
-        var userLogin = Request.GetUserLoginFromToken();
-        var roomName = Request.GetRoomNameFromToken();
-        if ((room is not null && userLogin is not null && userLogin == room.OwnerLogin)
-            || (roomName is not null))
+        if(AuthorizeRoomSpectator(room))
         {
             var response = new WatchResponse()
             {
@@ -149,6 +150,23 @@ public class roomController : ControllerBase
         throw new Exception("Cannot view pending cameras");
     }
 
+    [Authorize]
+    [HttpGet("recordings/{roomName}")]
+    public GetRecordingsResponse GetRecordings(string roomName)
+    {
+        var room = _roomRepository.GetRoomByName(roomName);
+        if (AuthorizeRoomSpectator(room))
+        {
+            var recordings = WithoutPasswordConverter.RecordingCollectionConverter(
+                _recordingRepository.GetRoomRecordings(room));
+            return new()
+            {
+                Recordings = recordings
+            };
+        }
+        throw new Exception("Can not view recordings");
+    }
+
     [AllowAnonymous]
     [HttpPost("token")]
     public GenerateTokenResponse GenerateToken(GenerateTokenParameter parameter)
@@ -181,5 +199,13 @@ public class roomController : ControllerBase
     {
         var roomFromDb = _roomRepository.GetRoom(room.RoomName, room.Password);
         return roomFromDb;
+    }
+
+    private bool AuthorizeRoomSpectator(RoomModel room)
+    {
+        var userLogin = Request.GetUserLoginFromToken();
+        var roomName = Request.GetRoomNameFromToken();
+        return (room is not null && userLogin is not null && userLogin == room.OwnerLogin)
+                || (roomName is not null);
     }
 }
