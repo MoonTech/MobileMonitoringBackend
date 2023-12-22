@@ -1,5 +1,5 @@
 using WatchTowerAPI.Domain.Models;
-using WatchTowerBackend.Contracts.DTOs.ModelsWithoutPasswords;
+using WatchTowerBackend.Contracts.DTOs.ModelsToDTOs;
 
 namespace WatchTowerAPI.Contracts.DTOs.Responses.Room;
 

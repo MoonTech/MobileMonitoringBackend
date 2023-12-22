@@ -3,17 +3,20 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using WatchTowerAPI.DataAccess.DbContexts;
 
 #nullable disable
 
-namespace WatchTowerAPI.DataAccess.Migrations
+namespace WatchTowerBackend.Migrations
 {
     [DbContext(typeof(WatchTowerDbContext))]
-    partial class WatchTowerDbContextModelSnapshot : ModelSnapshot
+    [Migration("20231221234414_AddRecordings")]
+    partial class AddRecordings
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder

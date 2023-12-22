@@ -2,7 +2,6 @@
 using WatchTowerAPI.DataAccess.DbContexts;
 using WatchTowerAPI.Domain.Models;
 using WatchTowerBackend.BusinessLogical.Utils;
-using WatchTowerBackend.Contracts.DTOs.ModelsWithoutPasswords;
 
 namespace WatchTowerAPI.BusinessLogical.Repositories.RoomRepository;
 

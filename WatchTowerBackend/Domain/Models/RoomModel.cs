@@ -18,7 +18,8 @@ public class RoomModel
     public string? Password { get; set; }
 
     public ICollection<CameraModel> Cameras { get; set; }
-    
+    public ICollection<RecordingModel> Recordings { get; set; }
+
     [ForeignKey("OwnerLogin")]
     public UserModel? Owner { get; set; }
     public string OwnerLogin { get; set; }
