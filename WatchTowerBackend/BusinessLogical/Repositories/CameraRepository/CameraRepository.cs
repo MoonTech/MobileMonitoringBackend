@@ -1,8 +1,8 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using WatchTowerAPI.DataAccess.DbContexts;
-using WatchTowerAPI.Domain.Models;
+using WatchTowerBackend.DataAccess.DbContexts;
+using WatchTowerBackend.Domain.Models;
 
-namespace WatchTowerAPI.BusinessLogical.Repositories.CameraRepository;
+namespace WatchTowerBackend.BusinessLogical.Repositories.CameraRepository;
 
 public class CameraRepository : BaseRepository, ICameraRepository
 {

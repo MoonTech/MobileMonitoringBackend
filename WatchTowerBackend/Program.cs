@@ -2,16 +2,16 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Text;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
-using WatchTowerAPI.DataAccess.DbContexts;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.Net.Http.Headers;
 using Microsoft.OpenApi.Models;
-using WatchTowerAPI.BusinessLogical.Repositories.CameraRepository;
-using WatchTowerAPI.BusinessLogical.Repositories.RecordingRepository;
-using WatchTowerAPI.BusinessLogical.Repositories.RoomRepository;
-using WatchTowerAPI.BusinessLogical.Repositories.UserRepository;
+using WatchTowerBackend.BusinessLogical.Repositories.CameraRepository;
+using WatchTowerBackend.BusinessLogical.Repositories.RecordingRepository;
+using WatchTowerBackend.BusinessLogical.Repositories.RoomRepository;
+using WatchTowerBackend.BusinessLogical.Repositories.UserRepository;
 using WatchTowerBackend.BusinessLogical.Services;
+using WatchTowerBackend.DataAccess.DbContexts;
 using WatchTowerBackend.Presentation.SwaggerConfiguration;
 
 

@@ -1,6 +1,6 @@
 using WatchTowerBackend.Contracts.DTOs.ModelsToDTOs;
 
-namespace WatchTowerAPI.Contracts.DTOs.Responses.Room;
+namespace WatchTowerBackend.Contracts.DTOs.Responses.Room;
 
 public class GetRecordingsResponse
 {

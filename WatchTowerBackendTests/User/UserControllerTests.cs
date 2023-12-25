@@ -1,7 +1,7 @@
 using Microsoft.Extensions.Configuration;
 using Moq;
-using WatchTowerAPI.Presentation.Controllers;
 using WatchTowerBackend.Contracts.DTOs.Parameters.User;
+using WatchTowerBackend.Presentation.Controllers;
 
 namespace WatchTowerBackendTests.User;
 

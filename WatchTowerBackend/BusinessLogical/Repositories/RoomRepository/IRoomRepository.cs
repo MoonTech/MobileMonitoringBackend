@@ -1,6 +1,6 @@
-﻿using WatchTowerAPI.Domain.Models;
+﻿using WatchTowerBackend.Domain.Models;
 
-namespace WatchTowerAPI.BusinessLogical.Repositories.RoomRepository;
+namespace WatchTowerBackend.BusinessLogical.Repositories.RoomRepository;
 
 public interface IRoomRepository
 {

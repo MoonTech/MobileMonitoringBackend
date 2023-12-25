@@ -1,6 +1,6 @@
-using WatchTowerAPI.Domain.Models;
+using WatchTowerBackend.Domain.Models;
 
-namespace WatchTowerAPI.BusinessLogical.Repositories.UserRepository;
+namespace WatchTowerBackend.BusinessLogical.Repositories.UserRepository;
 
 public interface IUserRepository
 {

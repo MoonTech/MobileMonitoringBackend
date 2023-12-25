@@ -1,37 +1,20 @@
-﻿using System.ComponentModel.DataAnnotations;
-using System.Data;
-using System.Drawing;
-using System.Drawing.Imaging;
-using System.IdentityModel.Tokens.Jwt;
-using System.Net;
-using System.Net.Http.Headers;
-using System.Security.Claims;
+﻿using System.Security.Claims;
 using System.Text.Json;
 using Azure;
-using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.Net.Http.Headers;
 using SkiaSharp;
-using SkiaSharp.QrCode;
 using SkiaSharp.QrCode.Image;
-using WatchTowerAPI.BusinessLogical.Repositories.RecordingRepository;
-using WatchTowerAPI.BusinessLogical.Repositories.RoomRepository;
-using WatchTowerAPI.BusinessLogical.Repositories.UserRepository;
-using WatchTowerAPI.Contracts.DTOs.Parameters;
-using WatchTowerAPI.Contracts.DTOs.Parameters.Room;
-using WatchTowerAPI.Contracts.DTOs.Responses;
-using WatchTowerAPI.Contracts.DTOs.Responses.Room;
-using WatchTowerAPI.DataAccess.DbContexts;
-using WatchTowerAPI.Domain.Models;
 using WatchTowerBackend.BusinessLogical.Authentication;
 using WatchTowerBackend.BusinessLogical.Converters;
+using WatchTowerBackend.BusinessLogical.Repositories.RecordingRepository;
+using WatchTowerBackend.BusinessLogical.Repositories.RoomRepository;
+using WatchTowerBackend.BusinessLogical.Repositories.UserRepository;
 using WatchTowerBackend.Contracts.DTOs.Parameters.Room;
-using WatchTowerBackend.Contracts.DTOs.Parameters.User;
+using WatchTowerBackend.Contracts.DTOs.Responses.Room;
+using WatchTowerBackend.Domain.Models;
 
-
-namespace WatchTowerAPI.Presentation.Controllers;
+namespace WatchTowerBackend.Presentation.Controllers;
 
 [ApiController]
 [Route("/room")]
@@ -87,7 +70,7 @@ public class roomController : ControllerBase
             };
             foreach (var camera in room.Cameras)
             {
-                if (camera.AcceptationState == true)
+                if (camera.AcceptationState)
                 {
                     response.ConnectedCameras.Add(camera);
                 }
@@ -239,16 +222,15 @@ public class roomController : ControllerBase
     private byte[] GenerateQRbyteArray(string qrBody)
     {
         byte[] buffer;
-        var memoryStream = new MemoryStream();
-            
+        using var memoryStream = new MemoryStream();
         var qrCode = new QrCode(qrBody, new Vector2Slim(64, 64), SKEncodedImageFormat.Png);
         qrCode.GenerateImage(memoryStream);
         memoryStream.Position = 0;
         try
         {
             int length = (int)memoryStream.Length;
-            buffer = new byte[length];            
-            int count;                            
+            buffer = new byte[length];
+            int count;
             int sum = 0;
             while ((count = memoryStream.Read(buffer, sum, length - sum)) > 0)
                 sum += count;
@@ -257,7 +239,6 @@ public class roomController : ControllerBase
         {
             memoryStream.Close();
         }
-
         return buffer;
     }
 }

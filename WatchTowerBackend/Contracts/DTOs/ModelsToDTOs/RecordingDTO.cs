@@ -1,4 +1,4 @@
-using WatchTowerAPI.Domain.Models;
+using WatchTowerBackend.Domain.Models;
 
 namespace WatchTowerBackend.Contracts.DTOs.ModelsToDTOs;
 

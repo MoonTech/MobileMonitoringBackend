@@ -1,22 +1,18 @@
 using System.ComponentModel.DataAnnotations;
 using System.Net;
-using System.Web.Http.Results;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.VisualBasic;
-using WatchTowerAPI.BusinessLogical.Repositories.CameraRepository;
-using WatchTowerAPI.BusinessLogical.Repositories.RecordingRepository;
-using WatchTowerAPI.BusinessLogical.Repositories.RoomRepository;
-using WatchTowerAPI.BusinessLogical.Repositories.UserRepository;
-using WatchTowerAPI.Domain.Models;
 using WatchTowerBackend.BusinessLogical.Authentication;
+using WatchTowerBackend.BusinessLogical.Repositories.CameraRepository;
+using WatchTowerBackend.BusinessLogical.Repositories.RecordingRepository;
+using WatchTowerBackend.BusinessLogical.Repositories.RoomRepository;
 using WatchTowerBackend.BusinessLogical.Services;
 using WatchTowerBackend.Contracts.DTOs.Parameters.VideoServer;
 using WatchTowerBackend.Contracts.DTOs.Responses.VideoServer;
+using WatchTowerBackend.Domain.Models;
 using Constants = WatchTowerBackend.BusinessLogical.Utils.Constants;
 
-namespace WatchTowerAPI.Presentation.Controllers;
+namespace WatchTowerBackend.Presentation.Controllers;
 
 [ApiController]
 [Route("/[controller]")]

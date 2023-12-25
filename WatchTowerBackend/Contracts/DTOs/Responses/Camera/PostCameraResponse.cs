@@ -1,4 +1,4 @@
-namespace WatchTowerAPI.Contracts.DTOs.Responses.Camera;
+namespace WatchTowerBackend.Contracts.DTOs.Responses.Camera;
 
 public class PostCameraResponse
 {
