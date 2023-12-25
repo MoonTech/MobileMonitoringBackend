@@ -223,7 +223,7 @@ public class roomController : ControllerBase
     {
         byte[] buffer;
         using var memoryStream = new MemoryStream();
-        var qrCode = new QrCode(qrBody, new Vector2Slim(64, 64), SKEncodedImageFormat.Png);
+        var qrCode = new QrCode(qrBody, new Vector2Slim(256, 256), SKEncodedImageFormat.Png);
         qrCode.GenerateImage(memoryStream);
         memoryStream.Position = 0;
         try
