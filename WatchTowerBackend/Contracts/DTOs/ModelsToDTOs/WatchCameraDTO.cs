@@ -1,5 +1,5 @@
-using WatchTowerAPI.Domain.Models;
 using WatchTowerBackend.BusinessLogical.Utils;
+using WatchTowerBackend.Domain.Models;
 
 namespace WatchTowerBackend.Contracts.DTOs.ModelsToDTOs
 {

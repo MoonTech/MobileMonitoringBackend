@@ -1,31 +1,20 @@
-﻿using System.ComponentModel.DataAnnotations;
-using System.Data;
-using System.IdentityModel.Tokens.Jwt;
-using System.Net;
-using System.Net.Http.Headers;
-using System.Security.Claims;
+﻿using System.Security.Claims;
+using System.Text.Json;
 using Azure;
-using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.Net.Http.Headers;
-using WatchTowerAPI.BusinessLogical.Repositories.RecordingRepository;
-using WatchTowerAPI.BusinessLogical.Repositories.RoomRepository;
-using WatchTowerAPI.BusinessLogical.Repositories.UserRepository;
-using WatchTowerAPI.Contracts.DTOs.Parameters;
-using WatchTowerAPI.Contracts.DTOs.Parameters.Room;
-using WatchTowerAPI.Contracts.DTOs.Responses;
-using WatchTowerAPI.Contracts.DTOs.Responses.Room;
-using WatchTowerAPI.DataAccess.DbContexts;
-using WatchTowerAPI.Domain.Models;
+using SkiaSharp;
+using SkiaSharp.QrCode.Image;
 using WatchTowerBackend.BusinessLogical.Authentication;
 using WatchTowerBackend.BusinessLogical.Converters;
+using WatchTowerBackend.BusinessLogical.Repositories.RecordingRepository;
+using WatchTowerBackend.BusinessLogical.Repositories.RoomRepository;
+using WatchTowerBackend.BusinessLogical.Repositories.UserRepository;
 using WatchTowerBackend.Contracts.DTOs.Parameters.Room;
-using WatchTowerBackend.Contracts.DTOs.Parameters.User;
+using WatchTowerBackend.Contracts.DTOs.Responses.Room;
+using WatchTowerBackend.Domain.Models;
 
-
-namespace WatchTowerAPI.Presentation.Controllers;
+namespace WatchTowerBackend.Presentation.Controllers;
 
 [ApiController]
 [Route("/room")]
@@ -81,7 +70,7 @@ public class roomController : ControllerBase
             };
             foreach (var camera in room.Cameras)
             {
-                if (camera.AcceptationState == true)
+                if (camera.AcceptationState)
                 {
                     response.ConnectedCameras.Add(camera);
                 }
@@ -167,6 +156,27 @@ public class roomController : ControllerBase
         throw new Exception("Can not view recordings");
     }
 
+    [Authorize(AuthenticationSchemes = "ApiAuthenticationScheme")]
+    [HttpPost("qrCode")]
+    public IActionResult GenerateQRCodexd(GenerateQRCodeParameter parameter)
+    {
+        var room = _roomRepository.GetRoomByName(parameter.RoomName);
+        var userLogin = Request.GetUserLoginFromToken();
+        if (userLogin == room.OwnerLogin)
+        {
+            var qrBodyObject = new
+            {
+                token = GenerateRoomToken(room),
+                roomName = room.RoomName
+            };
+            string qrBodyString = JsonSerializer.Serialize(qrBodyObject);
+            var qrByteArray = GenerateQRbyteArray(qrBodyString);
+            var qrCodeStreamName = room.RoomName + "_qr.png";
+            return File(qrByteArray, "application/force-download", qrCodeStreamName);
+        }
+        throw new Exception("You are not an owner of this room");
+    }
+
     [AllowAnonymous]
     [HttpPost("token")]
     public GenerateTokenResponse GenerateToken(GenerateTokenParameter parameter)
@@ -207,5 +217,28 @@ public class roomController : ControllerBase
         var roomName = Request.GetRoomNameFromToken();
         return (room is not null && userLogin is not null && userLogin == room.OwnerLogin)
                 || (roomName is not null);
+    }
+
+    private byte[] GenerateQRbyteArray(string qrBody)
+    {
+        byte[] buffer;
+        using var memoryStream = new MemoryStream();
+        var qrCode = new QrCode(qrBody, new Vector2Slim(256, 256), SKEncodedImageFormat.Png);
+        qrCode.GenerateImage(memoryStream);
+        memoryStream.Position = 0;
+        try
+        {
+            int length = (int)memoryStream.Length;
+            buffer = new byte[length];
+            int count;
+            int sum = 0;
+            while ((count = memoryStream.Read(buffer, sum, length - sum)) > 0)
+                sum += count;
+        }
+        finally
+        {
+            memoryStream.Close();
+        }
+        return buffer;
     }
 }

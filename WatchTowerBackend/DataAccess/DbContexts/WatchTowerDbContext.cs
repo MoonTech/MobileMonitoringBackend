@@ -1,8 +1,7 @@
-﻿using WatchTowerAPI.Domain.Models;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.ChangeTracking;
+﻿using Microsoft.EntityFrameworkCore;
+using WatchTowerBackend.Domain.Models;
 
-namespace WatchTowerAPI.DataAccess.DbContexts
+namespace WatchTowerBackend.DataAccess.DbContexts
 {
     public class WatchTowerDbContext : DbContext
     {

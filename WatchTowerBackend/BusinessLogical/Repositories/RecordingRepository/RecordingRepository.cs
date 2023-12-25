@@ -1,8 +1,7 @@
-using Microsoft.AspNetCore.Routing.Constraints;
-using WatchTowerAPI.DataAccess.DbContexts;
-using WatchTowerAPI.Domain.Models;
+using WatchTowerBackend.DataAccess.DbContexts;
+using WatchTowerBackend.Domain.Models;
 
-namespace WatchTowerAPI.BusinessLogical.Repositories.RecordingRepository;
+namespace WatchTowerBackend.BusinessLogical.Repositories.RecordingRepository;
 
 public class RecordingRepository : BaseRepository, IRecordingRepository
 {

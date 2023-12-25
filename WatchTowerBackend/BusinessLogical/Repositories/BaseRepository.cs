@@ -1,6 +1,6 @@
-﻿using WatchTowerAPI.DataAccess.DbContexts;
+﻿using WatchTowerBackend.DataAccess.DbContexts;
 
-namespace WatchTowerAPI.BusinessLogical.Repositories;
+namespace WatchTowerBackend.BusinessLogical.Repositories;
 
 public abstract class BaseRepository
 {

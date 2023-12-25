@@ -1,11 +1,8 @@
-﻿using System.ComponentModel;
-using System.ComponentModel.DataAnnotations;
+﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
-using System.Runtime.InteropServices;
 using Microsoft.EntityFrameworkCore;
-using System.ComponentModel.DataAnnotations.Schema;
 
-namespace WatchTowerAPI.Domain.Models;
+namespace WatchTowerBackend.Domain.Models;
 
 [Table("Cameras")]
 [Index(nameof(RoomName),nameof(CameraName), IsUnique = true)]

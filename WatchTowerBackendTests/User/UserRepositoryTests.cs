@@ -1,8 +1,6 @@
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
-using WatchTowerAPI.BusinessLogical.Repositories.UserRepository;
-using WatchTowerAPI.DataAccess.DbContexts;
-using WatchTowerAPI.Domain.Models;
+using WatchTowerBackend.BusinessLogical.Repositories.UserRepository;
 using WatchTowerBackendTests.Utils;
 
 namespace WatchTowerBackendTests.User;

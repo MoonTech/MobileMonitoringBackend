@@ -1,9 +1,9 @@
 using Microsoft.EntityFrameworkCore;
-using WatchTowerAPI.DataAccess.DbContexts;
-using WatchTowerAPI.Domain.Models;
 using WatchTowerBackend.BusinessLogical.Utils;
+using WatchTowerBackend.DataAccess.DbContexts;
+using WatchTowerBackend.Domain.Models;
 
-namespace WatchTowerAPI.BusinessLogical.Repositories.UserRepository;
+namespace WatchTowerBackend.BusinessLogical.Repositories.UserRepository;
 
 public class UserRepository : BaseRepository, IUserRepository
 {

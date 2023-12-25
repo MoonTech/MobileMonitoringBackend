@@ -1,6 +1,6 @@
-using WatchTowerAPI.Domain.Models;
+using WatchTowerBackend.Domain.Models;
 
-namespace WatchTowerAPI.BusinessLogical.Repositories.RecordingRepository;
+namespace WatchTowerBackend.BusinessLogical.Repositories.RecordingRepository;
 
 public interface IRecordingRepository
 {

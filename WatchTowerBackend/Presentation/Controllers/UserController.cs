@@ -1,17 +1,14 @@
-using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
-using System.Text;
 using Azure;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.IdentityModel.Tokens;
-using WatchTowerAPI.BusinessLogical.Repositories.UserRepository;
-using WatchTowerAPI.Domain.Models;
 using WatchTowerBackend.BusinessLogical.Authentication;
+using WatchTowerBackend.BusinessLogical.Repositories.UserRepository;
 using WatchTowerBackend.Contracts.DTOs.Parameters.User;
 using WatchTowerBackend.Contracts.DTOs.Responses.User;
+using WatchTowerBackend.Domain.Models;
 
-namespace WatchTowerAPI.Presentation.Controllers;
+namespace WatchTowerBackend.Presentation.Controllers;
 
 [ApiController]
 [Route("/[controller]")]
