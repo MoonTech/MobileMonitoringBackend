@@ -40,3 +40,5 @@ services:
     volumes:
       - "./srs.conf:/usr/local/srs/conf/srs.conf"
     entrypoint: "./objs/srs -c /usr/local/srs/conf/srs.conf"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
