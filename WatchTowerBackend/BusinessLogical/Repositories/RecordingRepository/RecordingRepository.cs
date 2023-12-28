@@ -1,3 +1,4 @@
+using Microsoft.EntityFrameworkCore;
 using WatchTowerBackend.DataAccess.DbContexts;
 using WatchTowerBackend.Domain.Models;
 
@@ -30,6 +31,12 @@ public class RecordingRepository : BaseRepository, IRecordingRepository
 
     public RecordingModel? GetRecording(string fileName)
     {
-        return context.Recordings.SingleOrDefault(r => r.Name == fileName);
+        return context.Recordings.Include(recording => recording.Room).SingleOrDefault(r => r.Name == fileName);
+    }
+
+    public bool DeleteRecording(RecordingModel recording)
+    {
+        context.Recordings.Remove(recording);
+        return SaveChanges();
     }
 }
