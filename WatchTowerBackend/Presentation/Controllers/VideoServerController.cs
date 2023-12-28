@@ -176,7 +176,7 @@ public class videoServerController : ControllerBase
                + "-" 
                + cameraName 
                + "-"
-               + DateTime.Now.ToString("dd-MM-yyyy-HH:mm:ss")
+               + DateTime.Now.ToString("dd-MM-yyyy-HH_mm_ss")
                + ".flv";
     }
 
