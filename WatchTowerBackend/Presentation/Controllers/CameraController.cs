@@ -22,12 +22,12 @@ public class cameraController : ControllerBase
         _roomRepository = roomRepository;
     }
 
-    [Authorize(AuthenticationSchemes = "ApiAuthenticationScheme")]
     [HttpPost]
     public PostCameraResponse PostCamera(PostCameraParameter parameter)
     {
         var roomParameter = _roomRepository.GetRoomByName(parameter.RoomName);
-        var userLogin = Request.GetUserLoginFromToken();
+        var userLogin = (String?)Request.Headers.Authorization != null ? Request.GetUserLoginFromToken(): null;
+
         if (roomParameter is null)
         {
             throw new Exception("Such room does not exist");
@@ -51,8 +51,7 @@ public class cameraController : ControllerBase
         }
         throw new Exception("Can not add camera with room");
     }
-    
-    [Authorize(AuthenticationSchemes = "ApiAuthenticationScheme")]
+
     [HttpDelete("{id}")]
     public IActionResult DeleteCamera(Guid id)
     {
