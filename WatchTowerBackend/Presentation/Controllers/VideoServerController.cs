@@ -136,6 +136,31 @@ public class videoServerController : ControllerBase
 
         throw new Exception("Could not download recordings");
     }
+
+    [Authorize(AuthenticationSchemes = "ApiAuthenticationScheme")]
+    [HttpDelete("record/{recordingName}")]
+    public async Task<IActionResult> DeleteRecording(string recordingName)
+    {
+        var recording = _recordingRepository.GetRecording(recordingName);
+        var userLogin = Request.GetUserLoginFromToken();
+        if (recording is not null && userLogin==recording.Room.OwnerLogin)
+        {
+            var response = await _httpClient.DeleteAsync(TrimRecordingUrl(recording.Url));
+            if (response.StatusCode == HttpStatusCode.NoContent)
+            {
+                if (_recordingRepository.DeleteRecording(recording))
+                {
+                    return Ok("Recording deleted Succesfully");
+                }
+            }
+            return BadRequest("Deleting recording failed");
+        }
+        if (recording is not null)
+        {
+            return Unauthorized("You are not an owner of this video");
+        }
+        return BadRequest("Such a recording does not exist");
+    }
     
     private bool AuthorizeRoomSpectator(RoomModel room)
     {
@@ -151,7 +176,7 @@ public class videoServerController : ControllerBase
                + "-" 
                + cameraName 
                + "-"
-               + DateTime.Now.ToString("dd-MM-yyyy-HH:mm:ss")
+               + DateTime.Now.ToString("dd-MM-yyyy-HH_mm_ss")
                + ".flv";
     }
 
