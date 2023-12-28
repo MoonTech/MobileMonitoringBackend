@@ -24,7 +24,8 @@ services:
       - "./log/:/var/opt/mssql/log/"
       - "./secrets/:/var/opt/mssql/secrets/"
   video_server_nginx:
-    image: "alqutami/rtmp-hls"
+    image: "rtmp-server"
+    build: ./rtmp-hls-server
     container_name: video_server_nginx
     ports:
       - "1935:1935"

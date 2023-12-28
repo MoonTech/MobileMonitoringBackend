@@ -158,7 +158,7 @@ public class roomController : ControllerBase
 
     [Authorize(AuthenticationSchemes = "ApiAuthenticationScheme")]
     [HttpPost("qrCode")]
-    public IActionResult GenerateQRCodexd(GenerateQRCodeParameter parameter)
+    public IActionResult GenerateQRCode(GenerateQRCodeParameter parameter)
     {
         var room = _roomRepository.GetRoomByName(parameter.RoomName);
         var userLogin = Request.GetUserLoginFromToken();
@@ -170,12 +170,13 @@ public class roomController : ControllerBase
                 roomName = room.RoomName
             };
             string qrBodyString = JsonSerializer.Serialize(qrBodyObject);
-            var qrByteArray = GenerateQRbyteArray(qrBodyString);
             var qrCodeStreamName = room.RoomName + "_qr.png";
-            return File(qrByteArray, "application/force-download", qrCodeStreamName);
+            return GenerateQRCodePngResponse(qrBodyString, qrCodeStreamName);
         }
         throw new Exception("You are not an owner of this room");
     }
+    
+    
 
     [AllowAnonymous]
     [HttpPost("token")]
@@ -240,5 +241,11 @@ public class roomController : ControllerBase
             memoryStream.Close();
         }
         return buffer;
+    }
+
+    private IActionResult GenerateQRCodePngResponse(string qrContent, string fileName)
+    {
+        var qrByteArray = GenerateQRbyteArray(qrContent);
+        return File(qrByteArray, "application/force-download", fileName);
     }
 }
