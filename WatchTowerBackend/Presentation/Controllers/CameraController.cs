@@ -57,15 +57,11 @@ public class cameraController : ControllerBase
     public IActionResult DeleteCamera(Guid id)
     {
         var cameraToDelete = _cameraRepository.GetCameraById(id);
-        var userLogin = Request.GetUserLoginFromToken();
         if (cameraToDelete is not null)
         {
-            if (userLogin == cameraToDelete.Room!.OwnerLogin)
+            if (_cameraRepository.DeleteCamera((cameraToDelete)))
             {
-                if (_cameraRepository.DeleteCamera((cameraToDelete)))
-                {
-                    return Ok("Camera has been deleted");
-                }
+                return Ok("Camera has been deleted");
             }
         }
         return BadRequest("Camera could not be deleted");
