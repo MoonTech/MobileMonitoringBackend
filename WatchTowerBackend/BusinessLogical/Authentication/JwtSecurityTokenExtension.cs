@@ -21,7 +21,7 @@ public static class JwtSecurityTokenExtension
         var token = new JwtSecurityToken(config["Jwt:Issuer"],
             config["Jwt:Audience"],
             claims,
-            expires: DateTime.Now.AddDays(365),
+            expires: DateTime.Now.AddHours(1),
             signingCredentials: credentials);
         
         return new JwtSecurityTokenHandler().WriteToken(token);
