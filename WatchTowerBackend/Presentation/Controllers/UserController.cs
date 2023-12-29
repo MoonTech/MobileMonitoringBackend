@@ -63,9 +63,9 @@ public class userController : ControllerBase
 
     [Authorize(AuthenticationSchemes = "ApiAuthenticationScheme")]
     [HttpPost("refreshToken")]
-    public ActionResult<string> RefreshToken()
+    public ActionResult<RefreshTokenResponse> RefreshToken()
     {
-        var refreshToken = Request.Cookies["refreshToken"];
+        var refreshToken = Request.Headers["refreshToken"];
         var userLogin = Request.GetUserLoginFromToken();
         var user = _userRepository.GetUser(userLogin);
         if (user is null)
@@ -85,7 +85,10 @@ public class userController : ControllerBase
         var newRefreshToken = GenerateRefreshToken();
         SetRefreshToken(user, newRefreshToken);
 
-        return Ok(token);
+        return Ok(new RefreshTokenResponse()
+        {
+            accessToken = token
+        });
     }
 
     // Additional Methods
@@ -119,12 +122,7 @@ public class userController : ControllerBase
 
     private void SetRefreshToken(UserModel user, RefreshToken newRefreshToken)
     {
-        var cookieOptions = new CookieOptions
-        {
-            HttpOnly = true,
-            Expires = newRefreshToken.Expires
-        };
-        Response.Cookies.Append("refreshToken", newRefreshToken.Token, cookieOptions);
+        Response.Headers.Add("refreshToken",newRefreshToken.Token);
         _userRepository.SetRefreshToken(user, newRefreshToken);
     }
 }
