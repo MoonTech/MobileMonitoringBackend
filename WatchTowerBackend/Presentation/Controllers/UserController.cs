@@ -1,4 +1,5 @@
 using System.Security.Claims;
+using System.Security.Cryptography;
 using Azure;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -29,9 +30,11 @@ public class userController : ControllerBase
     [AllowAnonymous]
     public SignUpUserResponse SignUp(SignUpUserParameter parameter)
     {
-        var newUser = _userRepository.AddUser(parameter.Login, parameter.Password);
+        var refreshToken = GenerateRefreshToken();
+        var newUser = _userRepository.AddUser(parameter.Login, parameter.Password, refreshToken);
         if (newUser is not null)
         {
+            SetRefreshToken(newUser, refreshToken);
             return new()
             {
                 AccessToken = GenerateUserToken(newUser)
@@ -48,6 +51,8 @@ public class userController : ControllerBase
         if (user != null)
         {
             var token = GenerateUserToken(user);
+            var refreshToken = GenerateRefreshToken();
+            SetRefreshToken(user, refreshToken);
             return new()
             {
                 AccessToken = token
@@ -57,12 +62,32 @@ public class userController : ControllerBase
     }
 
     [Authorize(AuthenticationSchemes = "ApiAuthenticationScheme")]
-    [HttpDelete("logout")]
-    public IActionResult Logout()
+    [HttpPost("refreshToken")]
+    public ActionResult<string> RefreshToken()
     {
-        throw new NotImplementedException();
+        var refreshToken = Request.Cookies["refreshToken"];
+        var userLogin = Request.GetUserLoginFromToken();
+        var user = _userRepository.GetUser(userLogin);
+        if (user is null)
+        {
+            return Unauthorized("User does not exist");
+        }
+        if (!user.RefreshToken.Equals(refreshToken))
+        {
+            return Unauthorized("Invalid Refresh Token");
+        }
+        if(user.TokenExpires < DateTime.Now)
+        {
+            return Unauthorized("Token expired");
+        }
+
+        string token = GenerateUserToken(user);
+        var newRefreshToken = GenerateRefreshToken();
+        SetRefreshToken(user, newRefreshToken);
+
+        return Ok(token);
     }
-    
+
     // Additional Methods
     private string GenerateUserToken(UserModel user)
     {
@@ -79,5 +104,27 @@ public class userController : ControllerBase
     {
         var userFromDb = _userRepository.GetUser(user.Login, user.Password);
         return userFromDb;
+    }
+    
+    private RefreshToken GenerateRefreshToken()
+    {
+        var refreshToken = new RefreshToken
+        {
+            Token = Convert.ToBase64String(RandomNumberGenerator.GetBytes(64)),
+            Expires = DateTime.Now.AddHours(1),
+            Created = DateTime.Now
+        };
+        return refreshToken;
+    }
+
+    private void SetRefreshToken(UserModel user, RefreshToken newRefreshToken)
+    {
+        var cookieOptions = new CookieOptions
+        {
+            HttpOnly = true,
+            Expires = newRefreshToken.Expires
+        };
+        Response.Cookies.Append("refreshToken", newRefreshToken.Token, cookieOptions);
+        _userRepository.SetRefreshToken(user, newRefreshToken);
     }
 }
