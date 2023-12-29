@@ -3,17 +3,20 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using WatchTowerBackend.DataAccess.DbContexts;
 
 #nullable disable
 
-namespace WatchTowerAPI.DataAccess.Migrations
+namespace WatchTowerBackend.Migrations
 {
     [DbContext(typeof(WatchTowerDbContext))]
-    partial class WatchTowerDbContextModelSnapshot : ModelSnapshot
+    [Migration("20231229164346_AddRefreshTokenForUsers")]
+    partial class AddRefreshTokenForUsers
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder

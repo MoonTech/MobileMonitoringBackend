@@ -41,7 +41,7 @@ public class roomController : ControllerBase
     public PostRoomResponse PostRoom(PostRoomParameter parameter)
     {
         var userLogin = Request.GetUserLoginFromToken();
-        var user = _userRepository.GetUserByLogin(userLogin);
+        var user = _userRepository.GetUser(userLogin);
         if (user is not null)
         {
             var newRoom = _roomRepository.CreateRoom(parameter.Name, parameter.Password, user);
@@ -104,7 +104,7 @@ public class roomController : ControllerBase
     public GetAllRoomsResponse GetAllRooms()
     {
         var login = Request.GetUserLoginFromToken();
-        var user = _userRepository.GetUserByLogin(login);
+        var user = _userRepository.GetUser(login);
         if (user is not null)
         {
             return new()
@@ -120,7 +120,7 @@ public class roomController : ControllerBase
     public GetPendingCamerasResponse GetPendingCameras(string roomName)
     {
         var login = Request.GetUserLoginFromToken();
-        var user = _userRepository.GetUserByLogin(login);
+        var user = _userRepository.GetUser(login);
         var room = _roomRepository.GetRoomByName(roomName);
         if (user is not null 
             && room is not null

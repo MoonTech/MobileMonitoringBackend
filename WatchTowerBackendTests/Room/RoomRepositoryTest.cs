@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
+using WatchTowerBackend.BusinessLogical.Authentication;
 using WatchTowerBackend.BusinessLogical.Repositories.RoomRepository;
 using WatchTowerBackend.BusinessLogical.Repositories.UserRepository;
 using WatchTowerBackend.Domain.Models;
@@ -94,10 +95,16 @@ public static class RoomRepositoryMock
 {
     internal static IRoomRepository SetRoomRepository()
     {
+        var exampleRefreshToken = new RefreshToken()
+        {
+            Token = "abcdef",
+            Created = DateTime.Now,
+            Expires = DateTime.Now.AddHours(1)
+        };
         var mockDbContext = RepositoryMockTest.CreateMockDbContext();
         var roomRepository = new RoomRepository(mockDbContext);
         var userRepository = new UserRepository(mockDbContext);
-        userRepository.AddUser("Login", "Password");
+        userRepository.AddUser("Login", "Password",exampleRefreshToken);
         return roomRepository;
     }
 }
