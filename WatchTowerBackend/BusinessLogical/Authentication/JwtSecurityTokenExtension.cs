@@ -13,7 +13,14 @@ public static class JwtSecurityTokenExtension
         return claim is not null ? claim.Value : null;
     }
 
-    public static string GenerateToken(IConfiguration config, string apiKeyPath, Claim[] claims)
+    public static JwtSecurityToken ConvertToJwtSecurityToken(string? token)
+    {
+        var handler = new JwtSecurityTokenHandler();
+        var jwtSecurityToken = handler.ReadJwtToken(token);
+        return jwtSecurityToken;
+    }
+
+    public static string GenerateToken(IConfiguration config, string apiKeyPath, int validHours, Claim[] claims)
     {
         var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(config[apiKeyPath]));
         var credentials = new SigningCredentials(securityKey, SecurityAlgorithms.HmacSha256);
@@ -21,7 +28,7 @@ public static class JwtSecurityTokenExtension
         var token = new JwtSecurityToken(config["Jwt:Issuer"],
             config["Jwt:Audience"],
             claims,
-            expires: DateTime.Now.AddHours(1),
+            expires: DateTime.Now.AddHours(validHours),
             signingCredentials: credentials);
         
         return new JwtSecurityTokenHandler().WriteToken(token);

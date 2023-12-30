@@ -17,7 +17,9 @@ public class userController : ControllerBase
 {
     private readonly IUserRepository _userRepository;
     private readonly IConfiguration _config;
-
+    private readonly int _tokenValidHours = 1;
+    private readonly int _refreshTokenValidHours = 720;
+    
     public userController(IUserRepository userRepository,
         IConfiguration config)
     {
@@ -65,7 +67,7 @@ public class userController : ControllerBase
     [HttpPost("refreshToken")]
     public ActionResult<RefreshTokenResponse> RefreshToken()
     {
-        var refreshToken = Request.Headers["refreshToken"];
+        var refreshToken = Request.Cookies["refreshToken"];
         var userLogin = Request.GetUserLoginFromToken();
         var user = _userRepository.GetUser(userLogin);
         if (user is null)
@@ -97,12 +99,14 @@ public class userController : ControllerBase
         return JwtSecurityTokenExtension.GenerateToken(
             _config, 
             "Jwt:ApiKey",
+            _tokenValidHours,
             new[]
             {
                 new Claim("login", user.Login),
                 new Claim("type", "TokenAPI")
             });
     }
+    
     private UserModel? AuthenticateUser(LoginUserParameter user)
     {
         var userFromDb = _userRepository.GetUser(user.Login, user.Password);
@@ -122,7 +126,12 @@ public class userController : ControllerBase
 
     private void SetRefreshToken(UserModel user, RefreshToken newRefreshToken)
     {
-        Response.Headers.Add("refreshToken",newRefreshToken.Token);
+        var cookieOptions = new CookieOptions
+        {
+            HttpOnly = true,
+            Expires = newRefreshToken.Expires
+        };
+        Response.Cookies.Append("refreshToken", newRefreshToken.Token, cookieOptions);
         _userRepository.SetRefreshToken(user, newRefreshToken);
     }
 }

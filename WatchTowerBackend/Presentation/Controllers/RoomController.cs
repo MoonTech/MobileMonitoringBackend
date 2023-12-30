@@ -1,8 +1,11 @@
-﻿using System.Security.Claims;
+﻿using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
+using System.Text;
 using System.Text.Json;
 using Azure;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.IdentityModel.Tokens;
 using SkiaSharp;
 using SkiaSharp.QrCode.Image;
 using WatchTowerBackend.BusinessLogical.Authentication;
@@ -24,6 +27,8 @@ public class roomController : ControllerBase
     private readonly IUserRepository _userRepository;
     private readonly IRecordingRepository _recordingRepository;
     private readonly IConfiguration _config;
+    private readonly int _tokenValidHours = 1;
+    private readonly int _refreshTokenValidHours = 720;
 
     public roomController(IRoomRepository roomRepository,
         IUserRepository userRepository,
@@ -193,6 +198,37 @@ public class roomController : ControllerBase
         }
         throw new RequestFailedException("Authorization failed");
     }
+
+    [Authorize(AuthenticationSchemes = "RoomAuthenticationScheme")]
+    [HttpPost("refreshToken")]
+    public ActionResult<RefreshRoomTokenResponse> RefreshToken()
+    {
+        var refreshToken = Request.Cookies["refreshToken"];
+        var tokenHandler = new JwtSecurityTokenHandler();
+        TokenValidationParameters tokenValidationParameters = new TokenValidationParameters()
+        {
+            ValidateIssuer = false,
+            ValidateAudience = false,
+            ValidateLifetime = true,
+            ValidateIssuerSigningKey = true,
+            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_config["Jwt:RoomRefreshKey"]))
+        };
+        var jwtSecurityToken = JwtSecurityTokenExtension.ConvertToJwtSecurityToken(refreshToken);
+        var roomName = jwtSecurityToken.GetClaim("roomName");
+        var room = _roomRepository.GetRoomByName(roomName); // TODO Brzydkie
+        try
+        {
+            tokenHandler.ValidateToken(refreshToken, tokenValidationParameters, out SecurityToken validatedToken);
+            var newRefreshToken = GenerateRefreshToken(room);
+            SetRefreshToken(newRefreshToken);
+            string token = GenerateRoomToken(room);
+            return Ok(token);
+        }
+        catch (SecurityTokenValidationException ex)
+        {
+            return BadRequest("Refresh token invlaid.");
+        }
+    }
     
     // Additional Methods
     private string GenerateRoomToken(RoomModel room)
@@ -200,12 +236,27 @@ public class roomController : ControllerBase
         return JwtSecurityTokenExtension.GenerateToken(
             _config,
             "Jwt:RoomKey",
+            _tokenValidHours,
             new[]
             {
                 new Claim("RoomName", room.RoomName),
                 new Claim("type", "RoomAuth")
             });
     }
+
+    private string GenerateRoomRefreshToken(RoomModel room)
+    {
+        return JwtSecurityTokenExtension.GenerateToken(
+            _config,
+            "Jwt:RoomRefreshKey",
+            _refreshTokenValidHours,
+            new[]
+            {
+                new Claim("RoomName", room.RoomName),
+                new Claim("type", "RoomRefreshToken")
+            });
+    }
+    
     private RoomModel? AuthenticateRoom(GenerateTokenParameter room)
     {
         var roomFromDb = _roomRepository.GetRoom(room.RoomName, room.Password);
@@ -247,5 +298,27 @@ public class roomController : ControllerBase
     {
         var qrByteArray = GenerateQRbyteArray(qrContent);
         return File(qrByteArray, "application/force-download", fileName);
+    }
+    
+    private RefreshToken GenerateRefreshToken(RoomModel room)
+    {
+        var refreshToken = new RefreshToken
+        {
+            Token = GenerateRoomRefreshToken(room),
+            Expires = DateTime.Now.AddHours(_refreshTokenValidHours),
+            Created = DateTime.Now
+        };
+
+        return refreshToken;
+    }
+
+    private void SetRefreshToken(RefreshToken newRefreshToken)
+    {
+        var cookieOptions = new CookieOptions
+        {
+            HttpOnly = true,
+            Expires = newRefreshToken.Expires
+        };
+        Response.Cookies.Append("refreshToken", newRefreshToken.Token, cookieOptions);
     }
 }
