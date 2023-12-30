@@ -10,32 +10,17 @@ public class UserRepository : BaseRepository, IUserRepository
 {
     public UserRepository(WatchTowerDbContext context) : base(context) {}
     
-    public UserModel? AddUser(string login, string password, RefreshToken refreshToken)
+    public UserModel? AddUser(string login, string password)
     {
         var newUser = new UserModel()
         {
             Login = login,
-            Password = PasswordHash.HashPassword(password),
-            RefreshToken = refreshToken.Token,
-            TokenCreated = refreshToken.Created,
-            TokenExpires = refreshToken.Expires
+            Password = PasswordHash.HashPassword(password)
         };
         context.Users.Add(newUser);
         if (SaveChanges())
         {
             return newUser;
-        }
-        return null;
-    }
-
-    public UserModel? SetRefreshToken(UserModel user, RefreshToken refreshToken)
-    {
-        user.RefreshToken = refreshToken.Token;
-        user.TokenCreated = refreshToken.Created;
-        user.TokenExpires = refreshToken.Expires;
-        if (SaveChanges())
-        {
-            return user;
         }
         return null;
     }

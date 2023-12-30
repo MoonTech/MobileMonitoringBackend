@@ -95,16 +95,10 @@ public static class RoomRepositoryMock
 {
     internal static IRoomRepository SetRoomRepository()
     {
-        var exampleRefreshToken = new RefreshToken()
-        {
-            Token = "abcdef",
-            Created = DateTime.Now,
-            Expires = DateTime.Now.AddHours(1)
-        };
         var mockDbContext = RepositoryMockTest.CreateMockDbContext();
         var roomRepository = new RoomRepository(mockDbContext);
         var userRepository = new UserRepository(mockDbContext);
-        userRepository.AddUser("Login", "Password",exampleRefreshToken);
+        userRepository.AddUser("Login", "Password");
         return roomRepository;
     }
 }
