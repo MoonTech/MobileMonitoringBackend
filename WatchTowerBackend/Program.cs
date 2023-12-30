@@ -6,6 +6,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.Net.Http.Headers;
 using Microsoft.OpenApi.Models;
+using Microsoft.VisualBasic;
 using WatchTowerBackend.BusinessLogical.Repositories.CameraRepository;
 using WatchTowerBackend.BusinessLogical.Repositories.RecordingRepository;
 using WatchTowerBackend.BusinessLogical.Repositories.RoomRepository;
@@ -13,6 +14,7 @@ using WatchTowerBackend.BusinessLogical.Repositories.UserRepository;
 using WatchTowerBackend.BusinessLogical.Services;
 using WatchTowerBackend.DataAccess.DbContexts;
 using WatchTowerBackend.Presentation.SwaggerConfiguration;
+using Constants = WatchTowerBackend.BusinessLogical.Utils.Constants;
 
 
 var builder = WebApplication.CreateBuilder(args);
@@ -53,24 +55,12 @@ builder.Services.AddAuthentication(options =>
     options.DefaultChallengeScheme = "MultiAuthSchemes";
 }).AddJwtBearer("ApiAuthenticationScheme", options =>
 {
-    options.TokenValidationParameters = new TokenValidationParameters
-    {
-        ValidateIssuer = false,
-        ValidateAudience = false,
-        ValidateLifetime = true,
-        ValidateIssuerSigningKey = true,
-        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["Jwt:ApiKey"]))
-    };
+    options.TokenValidationParameters = Constants.TokenValidationParameters(
+        builder.Configuration, "Jwt:ApiKey");
 }).AddJwtBearer("RoomAuthenticationScheme", options =>
 {
-    options.TokenValidationParameters = new TokenValidationParameters
-    {
-        ValidateIssuer = false,
-        ValidateAudience = false,
-        ValidateLifetime = true,
-        ValidateIssuerSigningKey = true,
-        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["Jwt:RoomKey"]))
-    };
+    options.TokenValidationParameters = Constants.TokenValidationParameters(
+        builder.Configuration, "Jwt:RoomKey");
 }).AddPolicyScheme("MultiAuthSchemes", JwtBearerDefaults.AuthenticationScheme, options =>
 {
     options.ForwardDefaultSelector = context =>

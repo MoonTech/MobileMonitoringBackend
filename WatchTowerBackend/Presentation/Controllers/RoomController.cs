@@ -1,8 +1,11 @@
-﻿using System.Security.Claims;
+﻿using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
+using System.Text;
 using System.Text.Json;
 using Azure;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.IdentityModel.Tokens;
 using SkiaSharp;
 using SkiaSharp.QrCode.Image;
 using WatchTowerBackend.BusinessLogical.Authentication;
@@ -10,6 +13,7 @@ using WatchTowerBackend.BusinessLogical.Converters;
 using WatchTowerBackend.BusinessLogical.Repositories.RecordingRepository;
 using WatchTowerBackend.BusinessLogical.Repositories.RoomRepository;
 using WatchTowerBackend.BusinessLogical.Repositories.UserRepository;
+using WatchTowerBackend.BusinessLogical.Utils;
 using WatchTowerBackend.Contracts.DTOs.Parameters.Room;
 using WatchTowerBackend.Contracts.DTOs.Responses.Room;
 using WatchTowerBackend.Domain.Models;
@@ -24,6 +28,8 @@ public class roomController : ControllerBase
     private readonly IUserRepository _userRepository;
     private readonly IRecordingRepository _recordingRepository;
     private readonly IConfiguration _config;
+    private readonly int _tokenValidHours = 1;
+    private readonly int _refreshTokenValidHours = 1;
 
     public roomController(IRoomRepository roomRepository,
         IUserRepository userRepository,
@@ -186,12 +192,39 @@ public class roomController : ControllerBase
         if (room is not null)
         {
             var token = GenerateRoomToken(room);
+            var refreshToken = GenerateRefreshToken(room);
+            SetRefreshToken(refreshToken);
             return new()
             {
                 AccessToken = token
             };
         }
         throw new RequestFailedException("Authorization failed");
+    }
+
+    [Authorize(AuthenticationSchemes = "RoomAuthenticationScheme")]
+    [HttpPost("refreshToken")]
+    public ActionResult<RefreshRoomTokenResponse> RefreshToken()
+    {
+        var refreshToken = Request.Cookies["refreshToken"];
+        var roomName = JwtSecurityTokenExtension.GetClaim(refreshToken, "RoomName");
+        if (Request.GetRoomNameFromToken() != roomName)
+        {
+            return BadRequest("Different rooms in access token and refresh token.");
+        }
+        var room = _roomRepository.GetRoomByName(roomName); // TODO Brzydkie
+        if (ValidateRefreshToken(refreshToken))
+        {
+            var newRefreshToken = GenerateRefreshToken(room);
+            SetRefreshToken(newRefreshToken);
+            string token = GenerateRoomToken(room);
+            var result = new RefreshRoomTokenResponse()
+            {
+                accessToken = token
+            };
+            return Ok(result);
+        }
+        return BadRequest("Refresh token invlaid.");
     }
     
     // Additional Methods
@@ -200,12 +233,27 @@ public class roomController : ControllerBase
         return JwtSecurityTokenExtension.GenerateToken(
             _config,
             "Jwt:RoomKey",
+            _tokenValidHours,
             new[]
             {
                 new Claim("RoomName", room.RoomName),
                 new Claim("type", "RoomAuth")
             });
     }
+
+    private string GenerateRoomRefreshToken(RoomModel room)
+    {
+        return JwtSecurityTokenExtension.GenerateToken(
+            _config,
+            "Jwt:RoomRefreshKey",
+            _refreshTokenValidHours,
+            new[]
+            {
+                new Claim("RoomName", room.RoomName),
+                new Claim("type", "RoomRefreshToken")
+            });
+    }
+    
     private RoomModel? AuthenticateRoom(GenerateTokenParameter room)
     {
         var roomFromDb = _roomRepository.GetRoom(room.RoomName, room.Password);
@@ -247,5 +295,43 @@ public class roomController : ControllerBase
     {
         var qrByteArray = GenerateQRbyteArray(qrContent);
         return File(qrByteArray, "application/force-download", fileName);
+    }
+    
+    private RefreshToken GenerateRefreshToken(RoomModel room)
+    {
+        var refreshToken = new RefreshToken
+        {
+            Token = GenerateRoomRefreshToken(room),
+            Expires = DateTime.Now.AddHours(_refreshTokenValidHours),
+            Created = DateTime.Now
+        };
+
+        return refreshToken;
+    }
+
+    private void SetRefreshToken(RefreshToken newRefreshToken)
+    {
+        var cookieOptions = new CookieOptions
+        {
+            HttpOnly = true,
+            Expires = newRefreshToken.Expires
+        };
+        Response.Cookies.Append("refreshToken", newRefreshToken.Token, cookieOptions);
+    }
+
+    private bool ValidateRefreshToken(string refreshToken)
+    {
+        try
+        {
+            var tokenHandler = new JwtSecurityTokenHandler();
+            TokenValidationParameters tokenValidationParameters = Constants.TokenValidationParameters(
+                _config, "Jwt:RoomRefreshKey");
+            tokenHandler.ValidateToken(refreshToken, tokenValidationParameters, out SecurityToken validatedToken);
+            return true;
+        }
+        catch (SecurityTokenValidationException ex)
+        {
+            return false;
+        }
     }
 }
