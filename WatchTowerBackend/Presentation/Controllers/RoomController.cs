@@ -212,7 +212,7 @@ public class roomController : ControllerBase
         {
             return BadRequest("Different rooms in access token and refresh token.");
         }
-        var room = _roomRepository.GetRoomByName(roomName); // TODO Brzydkie
+        var room = _roomRepository.GetRoomByName(roomName);
         if (ValidateRefreshToken(refreshToken))
         {
             var newRefreshToken = GenerateRefreshToken(room);

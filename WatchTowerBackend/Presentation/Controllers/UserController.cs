@@ -1,10 +1,13 @@
+using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Security.Cryptography;
 using Azure;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.IdentityModel.Tokens;
 using WatchTowerBackend.BusinessLogical.Authentication;
 using WatchTowerBackend.BusinessLogical.Repositories.UserRepository;
+using WatchTowerBackend.BusinessLogical.Utils;
 using WatchTowerBackend.Contracts.DTOs.Parameters.User;
 using WatchTowerBackend.Contracts.DTOs.Responses.User;
 using WatchTowerBackend.Domain.Models;
@@ -32,11 +35,11 @@ public class userController : ControllerBase
     [AllowAnonymous]
     public SignUpUserResponse SignUp(SignUpUserParameter parameter)
     {
-        var refreshToken = GenerateRefreshToken();
-        var newUser = _userRepository.AddUser(parameter.Login, parameter.Password, refreshToken);
+        var newUser = _userRepository.AddUser(parameter.Login, parameter.Password);
+        var refreshToken = GetRefreshToken(newUser);
         if (newUser is not null)
         {
-            SetRefreshToken(newUser, refreshToken);
+            SetRefreshToken(refreshToken);
             return new()
             {
                 AccessToken = GenerateUserToken(newUser)
@@ -53,8 +56,8 @@ public class userController : ControllerBase
         if (user != null)
         {
             var token = GenerateUserToken(user);
-            var refreshToken = GenerateRefreshToken();
-            SetRefreshToken(user, refreshToken);
+            var refreshToken = GetRefreshToken(user);
+            SetRefreshToken(refreshToken);
             return new()
             {
                 AccessToken = token
@@ -68,29 +71,24 @@ public class userController : ControllerBase
     public ActionResult<RefreshTokenResponse> RefreshToken()
     {
         var refreshToken = Request.Cookies["refreshToken"];
-        var userLogin = Request.GetUserLoginFromToken();
-        var user = _userRepository.GetUser(userLogin);
-        if (user is null)
+        var userLogin = JwtSecurityTokenExtension.GetClaim(refreshToken, "login");
+        if (Request.GetUserLoginFromToken() != userLogin)
         {
-            return Unauthorized("User does not exist");
+            return BadRequest("Different users in access token and refresh token.");
         }
-        if (!user.RefreshToken.Equals(refreshToken))
+        var user = _userRepository.GetUser(userLogin); // TODO Brzydkie
+        if (ValidateRefreshToken(refreshToken))
         {
-            return Unauthorized("Invalid Refresh Token");
+            var newRefreshToken = GetRefreshToken(user);
+            SetRefreshToken(newRefreshToken);
+            string token = GenerateUserToken(user);
+            var result = new RefreshTokenResponse()
+            {
+                accessToken = token
+            };
+            return Ok(result);
         }
-        if(user.TokenExpires < DateTime.Now)
-        {
-            return Unauthorized("Token expired");
-        }
-
-        string token = GenerateUserToken(user);
-        var newRefreshToken = GenerateRefreshToken();
-        SetRefreshToken(user, newRefreshToken);
-
-        return Ok(new RefreshTokenResponse()
-        {
-            accessToken = token
-        });
+        return BadRequest("Refresh token invlaid.");
     }
 
     // Additional Methods
@@ -113,18 +111,18 @@ public class userController : ControllerBase
         return userFromDb;
     }
     
-    private RefreshToken GenerateRefreshToken()
+    private RefreshToken GetRefreshToken(UserModel user)
     {
         var refreshToken = new RefreshToken
         {
-            Token = Convert.ToBase64String(RandomNumberGenerator.GetBytes(64)),
-            Expires = DateTime.Now.AddHours(1),
+            Token = GenerateRefreshTokenx(user),
+            Expires = DateTime.Now.AddHours(_refreshTokenValidHours),
             Created = DateTime.Now
         };
         return refreshToken;
     }
 
-    private void SetRefreshToken(UserModel user, RefreshToken newRefreshToken)
+    private void SetRefreshToken(RefreshToken newRefreshToken)
     {
         var cookieOptions = new CookieOptions
         {
@@ -132,6 +130,34 @@ public class userController : ControllerBase
             Expires = newRefreshToken.Expires
         };
         Response.Cookies.Append("refreshToken", newRefreshToken.Token, cookieOptions);
-        _userRepository.SetRefreshToken(user, newRefreshToken);
+    }
+    
+    private string GenerateRefreshTokenx(UserModel user)
+    {
+        return JwtSecurityTokenExtension.GenerateToken(
+            _config,
+            "Jwt:ApiRefreshKey",
+            _refreshTokenValidHours,
+            new[]
+            {
+                new Claim("login", user.Login),
+                new Claim("type", "RefreshTokenAPI")
+            });
+    }
+    
+    private bool ValidateRefreshToken(string refreshToken)
+    {
+        try
+        {
+            var tokenHandler = new JwtSecurityTokenHandler();
+            TokenValidationParameters tokenValidationParameters = Constants.TokenValidationParameters(
+                _config, "Jwt:ApiRefreshKey");
+            tokenHandler.ValidateToken(refreshToken, tokenValidationParameters, out SecurityToken validatedToken);
+            return true;
+        }
+        catch (SecurityTokenValidationException ex)
+        {
+            return false;
+        }
     }
 }

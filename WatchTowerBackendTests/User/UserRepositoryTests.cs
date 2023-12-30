@@ -9,30 +9,23 @@ namespace WatchTowerBackendTests.User;
 public class UserRepositoryTests
 {
     private readonly IUserRepository _userRepositoryMock;
-    private readonly RefreshToken _exampleRefreshToken;
 
     public UserRepositoryTests()
     {
         _userRepositoryMock = UserRepositoryMock.SetUserRepository();
-        _exampleRefreshToken = new RefreshToken()
-        {
-            Token = "abcdef",
-            Created = DateTime.Now,
-            Expires = DateTime.Now.AddHours(1)
-        };
     }
     
     [Fact]
     public void ShouldAddUser()
     {
-        var newUser = _userRepositoryMock.AddUser("Login", "Password",_exampleRefreshToken);
+        var newUser = _userRepositoryMock.AddUser("Login", "Password");
         Assert.True(newUser is not null);
     }
 
     [Fact]
     public void ShouldGetUserByLogin()
     {
-        _userRepositoryMock.AddUser("Login", "Password",_exampleRefreshToken);
+        _userRepositoryMock.AddUser("Login", "Password");
         var userFromDb = _userRepositoryMock.GetUser("Login");
         Assert.True(userFromDb is not null);
     }
@@ -40,7 +33,7 @@ public class UserRepositoryTests
     [Fact]
     public void ShouldNotGetUserByLoginWhenNotInDb()
     {
-        _userRepositoryMock.AddUser("Login", "Password",_exampleRefreshToken);
+        _userRepositoryMock.AddUser("Login", "Password");
         var userFromDb = _userRepositoryMock.GetUser("WrongLogin");
         Assert.True(userFromDb is null);
     }
@@ -48,7 +41,7 @@ public class UserRepositoryTests
     [Fact]
     public void ShouldGetUserByLoginAndPassword()
     {
-        _userRepositoryMock.AddUser("Login", "Password",_exampleRefreshToken);
+        _userRepositoryMock.AddUser("Login", "Password");
         var userFromDb = _userRepositoryMock.GetUser("Login", "Password");
         Assert.True(userFromDb is not null);
     }
