@@ -28,7 +28,7 @@ public class roomController : ControllerBase
     private readonly IRecordingRepository _recordingRepository;
     private readonly IConfiguration _config;
     private readonly int _tokenValidHours = 1;
-    private readonly int _refreshTokenValidHours = 720;
+    private readonly int _refreshTokenValidHours = 1;
 
     public roomController(IRoomRepository roomRepository,
         IUserRepository userRepository,
@@ -191,6 +191,8 @@ public class roomController : ControllerBase
         if (room is not null)
         {
             var token = GenerateRoomToken(room);
+            var refreshToken = GenerateRefreshToken(room);
+            SetRefreshToken(refreshToken);
             return new()
             {
                 AccessToken = token
@@ -207,6 +209,7 @@ public class roomController : ControllerBase
         var tokenHandler = new JwtSecurityTokenHandler();
         TokenValidationParameters tokenValidationParameters = new TokenValidationParameters()
         {
+            ClockSkew = TimeSpan.Zero,
             ValidateIssuer = false,
             ValidateAudience = false,
             ValidateLifetime = true,
@@ -214,7 +217,7 @@ public class roomController : ControllerBase
             IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_config["Jwt:RoomRefreshKey"]))
         };
         var jwtSecurityToken = JwtSecurityTokenExtension.ConvertToJwtSecurityToken(refreshToken);
-        var roomName = jwtSecurityToken.GetClaim("roomName");
+        var roomName = jwtSecurityToken.GetClaim("RoomName");
         var room = _roomRepository.GetRoomByName(roomName); // TODO Brzydkie
         try
         {
@@ -222,7 +225,11 @@ public class roomController : ControllerBase
             var newRefreshToken = GenerateRefreshToken(room);
             SetRefreshToken(newRefreshToken);
             string token = GenerateRoomToken(room);
-            return Ok(token);
+            var result = new RefreshRoomTokenResponse()
+            {
+                accessToken = token
+            };
+            return Ok(result);
         }
         catch (SecurityTokenValidationException ex)
         {

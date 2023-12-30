@@ -55,6 +55,7 @@ builder.Services.AddAuthentication(options =>
 {
     options.TokenValidationParameters = new TokenValidationParameters
     {
+        ClockSkew = TimeSpan.Zero,
         ValidateIssuer = false,
         ValidateAudience = false,
         ValidateLifetime = true,
@@ -65,6 +66,7 @@ builder.Services.AddAuthentication(options =>
 {
     options.TokenValidationParameters = new TokenValidationParameters
     {
+        ClockSkew = TimeSpan.Zero,
         ValidateIssuer = false,
         ValidateAudience = false,
         ValidateLifetime = true,
