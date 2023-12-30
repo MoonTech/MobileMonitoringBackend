@@ -13,6 +13,13 @@ public static class JwtSecurityTokenExtension
         return claim is not null ? claim.Value : null;
     }
 
+    public static string? GetClaim(string token, string claimType)
+    {
+        var jwtSecurityToken = JwtSecurityTokenExtension.ConvertToJwtSecurityToken(token);
+        var result = jwtSecurityToken.GetClaim(claimType);
+        return result;
+    }
+
     public static JwtSecurityToken ConvertToJwtSecurityToken(string? token)
     {
         var handler = new JwtSecurityTokenHandler();

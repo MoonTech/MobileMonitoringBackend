@@ -1,3 +1,6 @@
+using System.Text;
+using Microsoft.IdentityModel.Tokens;
+
 namespace WatchTowerBackend.BusinessLogical.Utils;
 
 public static class Constants
@@ -17,6 +20,20 @@ public static class Constants
     public static string StopRecordingEndpoint(string cameraToken)
     {
         return $"control/record/stop?app=live&name={cameraToken}&rec=rec1";
+    }
+
+    public static TokenValidationParameters TokenValidationParameters(
+        IConfiguration config, string signingKeyAppsettingsKey)
+    {
+        return new TokenValidationParameters()
+        {
+            ClockSkew = TimeSpan.Zero,
+            ValidateIssuer = false,
+            ValidateAudience = false,
+            ValidateLifetime = true,
+            ValidateIssuerSigningKey = true,
+            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(config[signingKeyAppsettingsKey]))
+        };
     }
     // TODO Add constants for [Authorize] attribute
 }

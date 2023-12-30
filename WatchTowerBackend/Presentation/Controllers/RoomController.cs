@@ -13,6 +13,7 @@ using WatchTowerBackend.BusinessLogical.Converters;
 using WatchTowerBackend.BusinessLogical.Repositories.RecordingRepository;
 using WatchTowerBackend.BusinessLogical.Repositories.RoomRepository;
 using WatchTowerBackend.BusinessLogical.Repositories.UserRepository;
+using WatchTowerBackend.BusinessLogical.Utils;
 using WatchTowerBackend.Contracts.DTOs.Parameters.Room;
 using WatchTowerBackend.Contracts.DTOs.Responses.Room;
 using WatchTowerBackend.Domain.Models;
@@ -206,22 +207,14 @@ public class roomController : ControllerBase
     public ActionResult<RefreshRoomTokenResponse> RefreshToken()
     {
         var refreshToken = Request.Cookies["refreshToken"];
-        var tokenHandler = new JwtSecurityTokenHandler();
-        TokenValidationParameters tokenValidationParameters = new TokenValidationParameters()
+        var roomName = JwtSecurityTokenExtension.GetClaim(refreshToken, "RoomName");
+        if (Request.GetRoomNameFromToken() != roomName)
         {
-            ClockSkew = TimeSpan.Zero,
-            ValidateIssuer = false,
-            ValidateAudience = false,
-            ValidateLifetime = true,
-            ValidateIssuerSigningKey = true,
-            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_config["Jwt:RoomRefreshKey"]))
-        };
-        var jwtSecurityToken = JwtSecurityTokenExtension.ConvertToJwtSecurityToken(refreshToken);
-        var roomName = jwtSecurityToken.GetClaim("RoomName");
+            return BadRequest("Different rooms in access token and refresh token.");
+        }
         var room = _roomRepository.GetRoomByName(roomName); // TODO Brzydkie
-        try
+        if (ValidateRefreshToken(refreshToken))
         {
-            tokenHandler.ValidateToken(refreshToken, tokenValidationParameters, out SecurityToken validatedToken);
             var newRefreshToken = GenerateRefreshToken(room);
             SetRefreshToken(newRefreshToken);
             string token = GenerateRoomToken(room);
@@ -231,10 +224,7 @@ public class roomController : ControllerBase
             };
             return Ok(result);
         }
-        catch (SecurityTokenValidationException ex)
-        {
-            return BadRequest("Refresh token invlaid.");
-        }
+        return BadRequest("Refresh token invlaid.");
     }
     
     // Additional Methods
@@ -327,5 +317,21 @@ public class roomController : ControllerBase
             Expires = newRefreshToken.Expires
         };
         Response.Cookies.Append("refreshToken", newRefreshToken.Token, cookieOptions);
+    }
+
+    private bool ValidateRefreshToken(string refreshToken)
+    {
+        try
+        {
+            var tokenHandler = new JwtSecurityTokenHandler();
+            TokenValidationParameters tokenValidationParameters = Constants.TokenValidationParameters(
+                _config, "Jwt:RoomRefreshKey");
+            tokenHandler.ValidateToken(refreshToken, tokenValidationParameters, out SecurityToken validatedToken);
+            return true;
+        }
+        catch (SecurityTokenValidationException ex)
+        {
+            return false;
+        }
     }
 }
