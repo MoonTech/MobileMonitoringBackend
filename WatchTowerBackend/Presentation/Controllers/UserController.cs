@@ -1,6 +1,7 @@
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Security.Cryptography;
+using System.Web.Http.Results;
 using Azure;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -8,6 +9,7 @@ using Microsoft.IdentityModel.Tokens;
 using WatchTowerBackend.BusinessLogical.Authentication;
 using WatchTowerBackend.BusinessLogical.Repositories.UserRepository;
 using WatchTowerBackend.BusinessLogical.Utils;
+using WatchTowerBackend.BusinessLogical.Utils.Exceptions;
 using WatchTowerBackend.Contracts.DTOs.Parameters.User;
 using WatchTowerBackend.Contracts.DTOs.Responses.User;
 using WatchTowerBackend.Domain.Models;
@@ -33,62 +35,104 @@ public class userController : ControllerBase
     // Endpoints
     [HttpPost]
     [AllowAnonymous]
-    public SignUpUserResponse SignUp(SignUpUserParameter parameter)
+    public ActionResult<SignUpUserResponse> SignUp(SignUpUserParameter parameter)
     {
-        var newUser = _userRepository.AddUser(parameter.Login, parameter.Password);
-        var refreshToken = GetRefreshToken(newUser);
-        if (newUser is not null)
+        try
         {
+            var newUser = _userRepository.AddUser(parameter.Login, parameter.Password);
+            var refreshToken = GetRefreshToken(newUser);
             SetRefreshToken(refreshToken);
-            return new()
+            SignUpUserResponse result = new()
             {
                 AccessToken = GenerateUserToken(newUser)
             };
+            return Ok(result);
         }
-        throw new Exception("Can not add user");
+        catch (ObjectAlreadyExistsInDbException ex)
+        {
+            return BadRequest(ex.Message);
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, ex.Message);
+        }
     }
     
     [AllowAnonymous]
     [HttpPost("login")]
-    public LoginUserResponse Login(LoginUserParameter parameter)
+    public ActionResult<LoginUserResponse> Login(LoginUserParameter parameter)
     {
-        var user = AuthenticateUser(parameter);
-        if (user != null)
+        try
         {
+            var user = AuthenticateUser(parameter);
             var token = GenerateUserToken(user);
             var refreshToken = GetRefreshToken(user);
             SetRefreshToken(refreshToken);
-            return new()
+            LoginUserResponse result = new()
             {
                 AccessToken = token
             };
+            return Ok(result);
         }
-        throw new RequestFailedException("Authorization failed");
+        catch (ObjectDoesNotExistInDbException ex)
+        {
+            return NotFound(ex.Message);
+        }
+        catch (WrongPasswordException ex)
+        {
+            return BadRequest(ex.Message);
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, ex.Message); 
+        }
     }
 
     [AllowAnonymous]
     [HttpPost("refreshToken")]
     public ActionResult<RefreshTokenResponse> RefreshToken()
     {
-        var refreshToken = Request.Cookies["refreshToken"];
-        var userLogin = JwtSecurityTokenExtension.GetClaim(refreshToken, "login");
-        if (Request.GetUserLoginFromToken() != userLogin)
+        try
         {
-            return BadRequest("Different users in access token and refresh token.");
-        }
-        var user = _userRepository.GetUser(userLogin); // TODO Brzydkie
-        if (ValidateRefreshToken(refreshToken))
-        {
-            var newRefreshToken = GetRefreshToken(user);
-            SetRefreshToken(newRefreshToken);
-            string token = GenerateUserToken(user);
-            var result = new RefreshTokenResponse()
+            var refreshToken = Request.Cookies["refreshToken"];
+            if (refreshToken is null)
             {
-                accessToken = token
-            };
-            return Ok(result);
+                return BadRequest("No refresh token passed in cookies or refresh token expired");
+            }
+            
+            var userLogin = JwtSecurityTokenExtension.GetClaim(refreshToken, "login");
+            if (userLogin is null)
+            {
+                return BadRequest("No user login inside authorization token");
+            }
+
+            if (Request.GetUserLoginFromToken() != userLogin)
+            {
+                return BadRequest("Different users in access token and refresh token.");
+            }
+
+            var user = _userRepository.GetUser(userLogin);
+            if (ValidateRefreshToken(refreshToken))
+            {
+                var newRefreshToken = GetRefreshToken(user);
+                SetRefreshToken(newRefreshToken);
+                string token = GenerateUserToken(user);
+                var result = new RefreshTokenResponse()
+                {
+                    accessToken = token
+                };
+                return Ok(result);
+            }
+            return BadRequest("Invalid refresh token");
         }
-        return BadRequest("Refresh token invlaid.");
+        catch (ObjectDoesNotExistInDbException ex)
+        {
+            return NotFound(ex.Message);
+        }
+        catch (Exception ex)
+        {   
+            return StatusCode(500, ex.Message);
+        }
     }
 
     // Additional Methods
@@ -105,7 +149,7 @@ public class userController : ControllerBase
             });
     }
     
-    private UserModel? AuthenticateUser(LoginUserParameter user)
+    private UserModel AuthenticateUser(LoginUserParameter user)
     {
         var userFromDb = _userRepository.GetUser(user.Login, user.Password);
         return userFromDb;
