@@ -193,7 +193,7 @@ public class roomController : ControllerBase
         {
             var token = GenerateRoomToken(room);
             var refreshToken = GenerateRefreshToken(room);
-            SetRefreshToken(refreshToken);
+            SetRefreshToken(refreshToken, room.RoomName);
             return new()
             {
                 AccessToken = token
@@ -202,13 +202,13 @@ public class roomController : ControllerBase
         throw new RequestFailedException("Authorization failed");
     }
 
-    [Authorize(AuthenticationSchemes = "RoomAuthenticationScheme")]
-    [HttpPost("refreshToken")]
-    public ActionResult<RefreshRoomTokenResponse> RefreshToken()
+    [AllowAnonymous]
+    [HttpPost("refreshToken/{roomName}")]
+    public ActionResult<RefreshRoomTokenResponse> RefreshToken(string roomName)
     {
         var refreshToken = Request.Cookies["refreshToken"];
-        var roomName = JwtSecurityTokenExtension.GetClaim(refreshToken, "RoomName");
-        if (Request.GetRoomNameFromToken() != roomName)
+        var roomNameFromCookie = JwtSecurityTokenExtension.GetClaim(refreshToken, "RoomName");
+        if (Request.GetRoomNameFromToken() != roomNameFromCookie || roomNameFromCookie != roomName)
         {
             return BadRequest("Different rooms in access token and refresh token.");
         }
@@ -216,7 +216,7 @@ public class roomController : ControllerBase
         if (ValidateRefreshToken(refreshToken))
         {
             var newRefreshToken = GenerateRefreshToken(room);
-            SetRefreshToken(newRefreshToken);
+            SetRefreshToken(newRefreshToken, roomName);
             string token = GenerateRoomToken(room);
             var result = new RefreshRoomTokenResponse()
             {
@@ -309,12 +309,13 @@ public class roomController : ControllerBase
         return refreshToken;
     }
 
-    private void SetRefreshToken(RefreshToken newRefreshToken)
+    private void SetRefreshToken(RefreshToken newRefreshToken, string roomName)
     {
         var cookieOptions = new CookieOptions
         {
             HttpOnly = true,
-            Expires = newRefreshToken.Expires
+            Expires = newRefreshToken.Expires,
+            Path = $"/room/refreshToken/{roomName}"
         };
         Response.Cookies.Append("refreshToken", newRefreshToken.Token, cookieOptions);
     }

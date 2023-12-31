@@ -66,7 +66,7 @@ public class userController : ControllerBase
         throw new RequestFailedException("Authorization failed");
     }
 
-    [Authorize(AuthenticationSchemes = "ApiAuthenticationScheme")]
+    [AllowAnonymous]
     [HttpPost("refreshToken")]
     public ActionResult<RefreshTokenResponse> RefreshToken()
     {
@@ -115,7 +115,7 @@ public class userController : ControllerBase
     {
         var refreshToken = new RefreshToken
         {
-            Token = GenerateRefreshTokenx(user),
+            Token = GenerateRefreshToken(user),
             Expires = DateTime.Now.AddHours(_refreshTokenValidHours),
             Created = DateTime.Now
         };
@@ -127,12 +127,13 @@ public class userController : ControllerBase
         var cookieOptions = new CookieOptions
         {
             HttpOnly = true,
-            Expires = newRefreshToken.Expires
+            Expires = newRefreshToken.Expires,
+            Path = "/user/refreshToken"
         };
         Response.Cookies.Append("refreshToken", newRefreshToken.Token, cookieOptions);
     }
     
-    private string GenerateRefreshTokenx(UserModel user)
+    private string GenerateRefreshToken(UserModel user)
     {
         return JwtSecurityTokenExtension.GenerateToken(
             _config,
