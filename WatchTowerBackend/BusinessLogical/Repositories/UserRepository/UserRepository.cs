@@ -18,13 +18,20 @@ public class UserRepository : BaseRepository, IUserRepository
             Login = login,
             Password = PasswordHash.HashPassword(password)
         };
-        context.Users.Add(newUser);
-        if (SaveChanges())
+        try
         {
-            return newUser;
+            context.Users.Add(newUser);
+            if (SaveChanges())
+            {
+                return newUser;
+            }
+            throw new CouldNotSaveChangesException("Could not save changes in database");
         }
-        GetUser(login);
-        throw new ObjectAlreadyExistsInDbException($"User with login {login} already exists.");
+        catch (Exception)
+        {
+            GetUser(login);
+            throw new ObjectAlreadyExistsInDbException($"User with login {login} already exists.");
+        }
     }
 
     public UserModel GetUser(string login, string password)
