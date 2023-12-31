@@ -11,6 +11,7 @@ using WatchTowerBackend.BusinessLogical.Repositories.CameraRepository;
 using WatchTowerBackend.BusinessLogical.Repositories.RecordingRepository;
 using WatchTowerBackend.BusinessLogical.Repositories.RoomRepository;
 using WatchTowerBackend.BusinessLogical.Repositories.UserRepository;
+using WatchTowerBackend.BusinessLogical.Repositories.VideoServerRepository;
 using WatchTowerBackend.BusinessLogical.Services;
 using WatchTowerBackend.DataAccess.DbContexts;
 using WatchTowerBackend.Presentation.SwaggerConfiguration;
@@ -33,7 +34,12 @@ builder.Services.AddTransient<IRoomRepository, RoomRepository>();
 builder.Services.AddTransient<ICameraRepository, CameraRepository>();
 builder.Services.AddTransient<IUserRepository, UserRepository>();
 builder.Services.AddTransient<IRecordingRepository, RecordingRepository>();
+builder.Services.AddTransient<IVideoServerRepository, VideoServerRepository>();
 builder.Services.AddSingleton<RecordingCamerasCache>();
+builder.Services.AddHttpClient<IVideoServerRepository, VideoServerRepository>(client =>
+{
+    client.BaseAddress = new(Constants.RecordBaseUrl);
+});
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(options =>
 {

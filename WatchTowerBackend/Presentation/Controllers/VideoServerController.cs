@@ -6,6 +6,7 @@ using WatchTowerBackend.BusinessLogical.Authentication;
 using WatchTowerBackend.BusinessLogical.Repositories.CameraRepository;
 using WatchTowerBackend.BusinessLogical.Repositories.RecordingRepository;
 using WatchTowerBackend.BusinessLogical.Repositories.RoomRepository;
+using WatchTowerBackend.BusinessLogical.Repositories.VideoServerRepository;
 using WatchTowerBackend.BusinessLogical.Services;
 using WatchTowerBackend.Contracts.DTOs.Parameters.VideoServer;
 using WatchTowerBackend.Contracts.DTOs.Responses.VideoServer;
@@ -21,24 +22,21 @@ public class videoServerController : ControllerBase
     private readonly ICameraRepository _cameraRepository;
     private readonly IRecordingRepository _recordingRepository;
     private readonly IRoomRepository _roomRepository;
-    private readonly IConfiguration _config;
-    private readonly HttpClient _httpClient;
     private readonly RecordingCamerasCache _recordingCamerasCache;
+    private readonly IVideoServerRepository _videoServerRepository;
 
     public videoServerController(
         ICameraRepository cameraRepository,
         IRecordingRepository recordingRepository,
         IRoomRepository roomRepository,
-        IConfiguration config, 
-        RecordingCamerasCache recordingCamerasCache)
+        RecordingCamerasCache recordingCamerasCache,
+        IVideoServerRepository videoServerRepository)
     {
         _cameraRepository = cameraRepository;
         _recordingRepository = recordingRepository;
         _roomRepository = roomRepository;
-        _config = config;
-        _httpClient = new HttpClient();
-        _httpClient.BaseAddress = new (Constants.RecordBaseUrl);
         _recordingCamerasCache = recordingCamerasCache;
+        _videoServerRepository = videoServerRepository;
     }
     
     [AllowAnonymous]
@@ -66,7 +64,7 @@ public class videoServerController : ControllerBase
         var userLogin = Request.GetUserLoginFromToken();
         if (camera is not null && userLogin == camera.Room.OwnerLogin)
         {
-            var response = await _httpClient.GetAsync(Constants.StartRecordingEndpoint(camera.CameraToken));
+            var response = await _videoServerRepository.StartRecording(Constants.StartRecordingEndpoint(camera.CameraToken));
             if (response.StatusCode == HttpStatusCode.OK)
             {
                 _recordingCamerasCache.Add(parameter.CameraId);
@@ -85,12 +83,12 @@ public class videoServerController : ControllerBase
         var userLogin = Request.GetUserLoginFromToken();
         if (camera is not null && userLogin == camera.Room.OwnerLogin)
         {
-            var response = await _httpClient.GetAsync(Constants.StopRecordingEndpoint(camera.CameraToken));
+            var response = await _videoServerRepository.StopRecording(Constants.StopRecordingEndpoint(camera.CameraToken));
             if (response.StatusCode == HttpStatusCode.OK)
             {
                 _recordingCamerasCache.Remove(parameter.CameraId);
                 var videoPath = (await response.Content.ReadAsStringAsync()).Trim('/');
-                var fileResponseMessage = await _httpClient.GetAsync(videoPath);
+                var fileResponseMessage = await _videoServerRepository.GetRecording(videoPath);
                 var file = await fileResponseMessage.Content.ReadAsStreamAsync();
                 string fileName = CreateFileName(camera.RoomName, camera.CameraName);
                 var videoUrl = CreateRecordingUrl(videoPath);
@@ -124,7 +122,7 @@ public class videoServerController : ControllerBase
             var room = _roomRepository.GetRoomByName(recording.RoomName);
             if (AuthorizeRoomSpectator(room))
             {
-                var fileResponseMessage = await _httpClient.GetAsync(TrimRecordingUrl(recording.Url));
+                var fileResponseMessage = await _videoServerRepository.GetRecording(TrimRecordingUrl(recording.Url));
                 var file = await fileResponseMessage.Content.ReadAsStreamAsync();
                 if (recording is not null)
                 {
@@ -145,7 +143,7 @@ public class videoServerController : ControllerBase
         var userLogin = Request.GetUserLoginFromToken();
         if (recording is not null && userLogin==recording.Room.OwnerLogin)
         {
-            var response = await _httpClient.DeleteAsync(TrimRecordingUrl(recording.Url));
+            var response = await _videoServerRepository.DeleteRecording(TrimRecordingUrl(recording.Url));
             if (response.StatusCode == HttpStatusCode.NoContent)
             {
                 if (_recordingRepository.DeleteRecording(recording))
