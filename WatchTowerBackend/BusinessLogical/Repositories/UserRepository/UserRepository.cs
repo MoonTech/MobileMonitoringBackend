@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using WatchTowerBackend.BusinessLogical.Authentication;
 using WatchTowerBackend.BusinessLogical.Utils;
+using WatchTowerBackend.BusinessLogical.Utils.Exceptions;
 using WatchTowerBackend.DataAccess.DbContexts;
 using WatchTowerBackend.Domain.Models;
 
@@ -17,27 +18,40 @@ public class UserRepository : BaseRepository, IUserRepository
             Login = login,
             Password = PasswordHash.HashPassword(password)
         };
-        context.Users.Add(newUser);
-        if (SaveChanges())
+        try
         {
-            return newUser;
+            context.Users.Add(newUser);
+            if (SaveChanges())
+            {
+                return newUser;
+            }
+            throw new CouldNotSaveChangesException("Could not save changes in database");
         }
-        return null;
+        catch (Exception)
+        {
+            GetUser(login);
+            throw new ObjectAlreadyExistsInDbException($"User with login {login} already exists.");
+        }
     }
 
-    public UserModel? GetUser(string login, string password)
+    public UserModel GetUser(string login, string password)
     {
-        var user = context.Users.SingleOrDefault(user => user.Login == login);
-        if (PasswordHash.VerifyPassword(password, user.Password))
+        var user = context.Users.Include("Rooms.Cameras").SingleOrDefault(user => user.Login == login);
+        if (user is not null && PasswordHash.VerifyPassword(password, user.Password))
         {
             return user;
         }
-        return null;
+        GetUser(login);
+        throw new WrongPasswordException($"Wrong password for user {login}");
     }
 
-    public UserModel? GetUser(string login)
+    public UserModel GetUser(string login)
     {
         var user = context.Users.Include("Rooms.Cameras").SingleOrDefault(user => user.Login == login);
-        return user;
+        if (user is not null)
+        {
+            return user;
+        }
+        throw new ObjectDoesNotExistInDbException($"User {login} does not exist in database");
     }
 }

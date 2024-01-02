@@ -1,3 +1,5 @@
+using System.Net;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using Moq;
 using WatchTowerBackend.Contracts.DTOs.Parameters.User;
@@ -25,7 +27,9 @@ public class UserControllerTests
             Login = "login",
             Password = "Password"
         });
-        Assert.True(result.AccessToken.Length > 0);
+        // TODO Will this work?
+        var okResult = result.Result as OkObjectResult;
+        Assert.True(okResult is not null);
     }
     
     [Fact]
@@ -41,7 +45,7 @@ public class UserControllerTests
             Login = "login",
             Password = "Password"
         });
-        Assert.True(result.AccessToken.Length > 0);
+        Assert.True(result.Value.AccessToken.Length > 0);
     }
 
     [Fact]
@@ -59,7 +63,7 @@ public class UserControllerTests
                 Login = "login",
                 Password = "Password"
             });
-            Assert.False(result2.AccessToken.Length > 0);
+            Assert.False(result2.Value.AccessToken.Length > 0);
         }
         catch
         {
