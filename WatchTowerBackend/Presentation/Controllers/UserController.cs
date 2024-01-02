@@ -200,7 +200,7 @@ public class userController : ControllerBase
             tokenHandler.ValidateToken(refreshToken, tokenValidationParameters, out SecurityToken validatedToken);
             return true;
         }
-        catch (SecurityTokenValidationException ex)
+        catch (SecurityTokenValidationException)
         {
             return false;
         }
