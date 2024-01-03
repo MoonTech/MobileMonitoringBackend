@@ -2,18 +2,44 @@ version: "3.9"  # optional since v1.27.0
 services:
   web_api:
     image: watchtowerapi
+    build: .
     container_name: watchtowerapi_application
     ports:
       - "5000:80"
+    depends_on:
+      - sql
+      - video_server_nginx
+      - video_server_srs
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
   sql:
     image: "mcr.microsoft.com/mssql/server:2022-latest"
     container_name: sql_server2022
     ports: # not actually needed, because the two services are on the same network
-      - "1433:1433" 
+      - "1430:1433" 
     environment:
       - ACCEPT_EULA=y
       - SA_PASSWORD=A&VeryComplex123Password
     volumes:
-      - "./data/:/var/opt/mssql/data/"
       - "./log/:/var/opt/mssql/log/"
       - "./secrets/:/var/opt/mssql/secrets/"
+  video_server_nginx:
+    image: "rtmp-server"
+    build: ./rtmp-hls-server
+    container_name: video_server_nginx
+    ports:
+      - "1935:1935"
+      - "8080:8080"
+    volumes:
+      - "./nginx.conf:/etc/nginx/nginx.conf"
+  video_server_srs:
+    image: "ossrs/srs:5"
+    container_name: video_server_srs
+    ports:
+      - "1936:1936"
+      - "8081:8081"
+    volumes:
+      - "./srs.conf:/usr/local/srs/conf/srs.conf"
+    entrypoint: "./objs/srs -c /usr/local/srs/conf/srs.conf"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"

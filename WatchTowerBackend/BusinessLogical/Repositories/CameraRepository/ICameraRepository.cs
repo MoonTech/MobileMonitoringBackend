@@ -1,6 +1,6 @@
-﻿using WatchTowerAPI.Domain.Models;
+﻿using WatchTowerBackend.Domain.Models;
 
-namespace WatchTowerAPI.BusinessLogical.Repositories.CameraRepository;
+namespace WatchTowerBackend.BusinessLogical.Repositories.CameraRepository;
 
 public interface ICameraRepository
 {

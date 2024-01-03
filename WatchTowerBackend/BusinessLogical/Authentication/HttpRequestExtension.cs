@@ -18,8 +18,8 @@ public static class HttpRequestExtension
         var token = request.GetToken();
         var handler = new JwtSecurityTokenHandler();
         var jwtSecurityToken = handler.ReadJwtToken(token);
-        var login = jwtSecurityToken.GetClaim(claimType);
-        return login;
+        var claim = jwtSecurityToken.GetClaim(claimType);
+        return claim;
     }
     
     public static string GetUserLoginFromToken(this HttpRequest request)

@@ -4,7 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
-using WatchTowerAPI.DataAccess.DbContexts;
+using WatchTowerBackend.DataAccess.DbContexts;
 
 #nullable disable
 
@@ -22,7 +22,7 @@ namespace WatchTowerAPI.DataAccess.Migrations
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
 
-            modelBuilder.Entity("WatchTowerAPI.Domain.Models.CameraModel", b =>
+            modelBuilder.Entity("WatchTowerBackend.Domain.Models.CameraModel", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -51,7 +51,27 @@ namespace WatchTowerAPI.DataAccess.Migrations
                     b.ToTable("Cameras");
                 });
 
-            modelBuilder.Entity("WatchTowerAPI.Domain.Models.RoomModel", b =>
+            modelBuilder.Entity("WatchTowerBackend.Domain.Models.RecordingModel", b =>
+                {
+                    b.Property<string>("Name")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<string>("RoomName")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<string>("Url")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Name");
+
+                    b.HasIndex("RoomName");
+
+                    b.ToTable("Recordings");
+                });
+
+            modelBuilder.Entity("WatchTowerBackend.Domain.Models.RoomModel", b =>
                 {
                     b.Property<string>("RoomName")
                         .HasColumnType("nvarchar(450)");
@@ -73,7 +93,7 @@ namespace WatchTowerAPI.DataAccess.Migrations
                     b.ToTable("Rooms");
                 });
 
-            modelBuilder.Entity("WatchTowerAPI.Domain.Models.UserModel", b =>
+            modelBuilder.Entity("WatchTowerBackend.Domain.Models.UserModel", b =>
                 {
                     b.Property<string>("Login")
                         .HasColumnType("nvarchar(450)");
@@ -87,9 +107,9 @@ namespace WatchTowerAPI.DataAccess.Migrations
                     b.ToTable("Users");
                 });
 
-            modelBuilder.Entity("WatchTowerAPI.Domain.Models.CameraModel", b =>
+            modelBuilder.Entity("WatchTowerBackend.Domain.Models.CameraModel", b =>
                 {
-                    b.HasOne("WatchTowerAPI.Domain.Models.RoomModel", "Room")
+                    b.HasOne("WatchTowerBackend.Domain.Models.RoomModel", "Room")
                         .WithMany("Cameras")
                         .HasForeignKey("RoomName")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -98,9 +118,20 @@ namespace WatchTowerAPI.DataAccess.Migrations
                     b.Navigation("Room");
                 });
 
-            modelBuilder.Entity("WatchTowerAPI.Domain.Models.RoomModel", b =>
+            modelBuilder.Entity("WatchTowerBackend.Domain.Models.RecordingModel", b =>
                 {
-                    b.HasOne("WatchTowerAPI.Domain.Models.UserModel", "Owner")
+                    b.HasOne("WatchTowerBackend.Domain.Models.RoomModel", "Room")
+                        .WithMany("Recordings")
+                        .HasForeignKey("RoomName")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Room");
+                });
+
+            modelBuilder.Entity("WatchTowerBackend.Domain.Models.RoomModel", b =>
+                {
+                    b.HasOne("WatchTowerBackend.Domain.Models.UserModel", "Owner")
                         .WithMany("Rooms")
                         .HasForeignKey("OwnerLogin")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -109,12 +140,14 @@ namespace WatchTowerAPI.DataAccess.Migrations
                     b.Navigation("Owner");
                 });
 
-            modelBuilder.Entity("WatchTowerAPI.Domain.Models.RoomModel", b =>
+            modelBuilder.Entity("WatchTowerBackend.Domain.Models.RoomModel", b =>
                 {
                     b.Navigation("Cameras");
+
+                    b.Navigation("Recordings");
                 });
 
-            modelBuilder.Entity("WatchTowerAPI.Domain.Models.UserModel", b =>
+            modelBuilder.Entity("WatchTowerBackend.Domain.Models.UserModel", b =>
                 {
                     b.Navigation("Rooms");
                 });

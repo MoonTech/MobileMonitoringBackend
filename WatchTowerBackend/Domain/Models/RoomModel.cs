@@ -1,10 +1,8 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
-using System.Diagnostics.CodeAnalysis;
 using Microsoft.EntityFrameworkCore;
-using HostingEnvironmentExtensions = Microsoft.AspNetCore.Hosting.HostingEnvironmentExtensions;
 
-namespace WatchTowerAPI.Domain.Models;
+namespace WatchTowerBackend.Domain.Models;
 
 
 
@@ -18,7 +16,8 @@ public class RoomModel
     public string? Password { get; set; }
 
     public ICollection<CameraModel> Cameras { get; set; }
-    
+    public ICollection<RecordingModel> Recordings { get; set; }
+
     [ForeignKey("OwnerLogin")]
     public UserModel? Owner { get; set; }
     public string OwnerLogin { get; set; }

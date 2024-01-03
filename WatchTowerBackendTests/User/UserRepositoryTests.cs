@@ -1,8 +1,7 @@
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
-using WatchTowerAPI.BusinessLogical.Repositories.UserRepository;
-using WatchTowerAPI.DataAccess.DbContexts;
-using WatchTowerAPI.Domain.Models;
+using WatchTowerBackend.BusinessLogical.Authentication;
+using WatchTowerBackend.BusinessLogical.Repositories.UserRepository;
 using WatchTowerBackendTests.Utils;
 
 namespace WatchTowerBackendTests.User;
@@ -27,7 +26,7 @@ public class UserRepositoryTests
     public void ShouldGetUserByLogin()
     {
         _userRepositoryMock.AddUser("Login", "Password");
-        var userFromDb = _userRepositoryMock.GetUserByLogin("Login");
+        var userFromDb = _userRepositoryMock.GetUser("Login");
         Assert.True(userFromDb is not null);
     }
     
@@ -35,7 +34,7 @@ public class UserRepositoryTests
     public void ShouldNotGetUserByLoginWhenNotInDb()
     {
         _userRepositoryMock.AddUser("Login", "Password");
-        var userFromDb = _userRepositoryMock.GetUserByLogin("WrongLogin");
+        var userFromDb = _userRepositoryMock.GetUser("WrongLogin");
         Assert.True(userFromDb is null);
     }
 

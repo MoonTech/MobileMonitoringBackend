@@ -1,8 +1,7 @@
-﻿using WatchTowerAPI.Domain.Models;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.ChangeTracking;
+﻿using Microsoft.EntityFrameworkCore;
+using WatchTowerBackend.Domain.Models;
 
-namespace WatchTowerAPI.DataAccess.DbContexts
+namespace WatchTowerBackend.DataAccess.DbContexts
 {
     public class WatchTowerDbContext : DbContext
     {
@@ -11,5 +10,6 @@ namespace WatchTowerAPI.DataAccess.DbContexts
         public DbSet<CameraModel> Cameras { get; set; }
         public DbSet<RoomModel> Rooms { get; set; }
         public DbSet<UserModel> Users { get; set; }
+        public DbSet<RecordingModel> Recordings { get; set; }
     }
 }

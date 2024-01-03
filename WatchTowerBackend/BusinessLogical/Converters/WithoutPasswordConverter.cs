@@ -1,5 +1,5 @@
-using WatchTowerAPI.Domain.Models;
-using WatchTowerBackend.Contracts.DTOs.ModelsWithoutPasswords;
+using WatchTowerBackend.Contracts.DTOs.ModelsToDTOs;
+using WatchTowerBackend.Domain.Models;
 
 namespace WatchTowerBackend.BusinessLogical.Converters;
 
@@ -57,6 +57,20 @@ public static class WithoutPasswordConverter
                 CameraToken = camera.CameraToken,
                 AcceptationState = camera.AcceptationState
             });
+        }
+        return result;
+    }
+    
+    public static ICollection<RecordingDTO> RecordingCollectionConverter(ICollection<RecordingModel> recordings)
+    {
+        if (recordings is null)
+        {
+            return null;
+        }
+        ICollection<RecordingDTO> result = new List<RecordingDTO>();
+        foreach (var recording in recordings)
+        {
+            result.Add(recording);
         }
         return result;
     }

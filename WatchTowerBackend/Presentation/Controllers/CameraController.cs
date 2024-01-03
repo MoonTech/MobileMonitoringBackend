@@ -1,17 +1,12 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using WatchTowerAPI.BusinessLogical.Repositories.CameraRepository;
-using WatchTowerAPI.BusinessLogical.Repositories.RoomRepository;
-using WatchTowerAPI.Contracts.DTOs.Parameters;
-using WatchTowerAPI.Contracts.DTOs.Parameters.Camera;
-using WatchTowerAPI.Contracts.DTOs.Parameters.Room;
-using WatchTowerAPI.Contracts.DTOs.Responses;
-using WatchTowerAPI.Contracts.DTOs.Responses.Camera;
-using WatchTowerAPI.Contracts.DTOs.Responses.Room;
-using WatchTowerAPI.Domain.Models;
 using WatchTowerBackend.BusinessLogical.Authentication;
+using WatchTowerBackend.BusinessLogical.Repositories.CameraRepository;
+using WatchTowerBackend.BusinessLogical.Repositories.RoomRepository;
+using WatchTowerBackend.Contracts.DTOs.Parameters.Camera;
+using WatchTowerBackend.Contracts.DTOs.Responses.Camera;
 
-namespace WatchTowerAPI.Presentation.Controllers;
+namespace WatchTowerBackend.Presentation.Controllers;
 
 [ApiController]
 [Route("/[controller]")]
@@ -27,12 +22,12 @@ public class cameraController : ControllerBase
         _roomRepository = roomRepository;
     }
 
-    [Authorize(AuthenticationSchemes = "ApiAuthenticationScheme")]
     [HttpPost]
     public PostCameraResponse PostCamera(PostCameraParameter parameter)
     {
         var roomParameter = _roomRepository.GetRoomByName(parameter.RoomName);
-        var userLogin = Request.GetUserLoginFromToken();
+        var userLogin = (String?)Request.Headers.Authorization != null ? Request.GetUserLoginFromToken(): null;
+
         if (roomParameter is null)
         {
             throw new Exception("Such room does not exist");
@@ -56,21 +51,16 @@ public class cameraController : ControllerBase
         }
         throw new Exception("Can not add camera with room");
     }
-    
-    [Authorize(AuthenticationSchemes = "ApiAuthenticationScheme")]
+
     [HttpDelete("{id}")]
     public IActionResult DeleteCamera(Guid id)
     {
         var cameraToDelete = _cameraRepository.GetCameraById(id);
-        var userLogin = Request.GetUserLoginFromToken();
         if (cameraToDelete is not null)
         {
-            if (userLogin == cameraToDelete.Room!.OwnerLogin)
+            if (_cameraRepository.DeleteCamera((cameraToDelete)))
             {
-                if (_cameraRepository.DeleteCamera((cameraToDelete)))
-                {
-                    return Ok("Camera has been deleted");
-                }
+                return Ok("Camera has been deleted");
             }
         }
         return BadRequest("Camera could not be deleted");

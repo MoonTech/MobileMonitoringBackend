@@ -1,4 +1,4 @@
-﻿namespace WatchTowerAPI.Contracts.DTOs.Parameters.Room;
+﻿namespace WatchTowerBackend.Contracts.DTOs.Parameters.Room;
 
 public class AuthorizeParameter
 {
