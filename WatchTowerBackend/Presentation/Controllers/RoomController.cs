@@ -172,8 +172,9 @@ public class roomController : ControllerBase
         {
             var qrBodyObject = new
             {
+                roomName = room.RoomName,
                 token = GenerateRoomToken(room),
-                roomName = room.RoomName
+                refreshToken = GenerateRefreshToken(room)
             };
             string qrBodyString = JsonSerializer.Serialize(qrBodyObject);
             var qrCodeStreamName = room.RoomName + "_qr.png";
