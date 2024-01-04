@@ -1,12 +1,9 @@
 using System.Net;
-using WatchTowerAPI.Contracts.DTOs.Parameters.Camera;
-using WatchTowerAPI.Contracts.DTOs.Responses.Camera;
-using WatchTowerAPI.Contracts.DTOs.Responses.Room;
-using WatchTowerAPI.Domain.Models;
-using WatchTowerAPI.Presentation.Controllers;
+using WatchTowerBackend.Contracts.DTOs.Parameters.Camera;
+using WatchTowerBackend.Contracts.DTOs.Responses.Camera;
+using WatchTowerBackend.Contracts.DTOs.Responses.Room;
 using WatchTowerBackend.BusinessLogical.Utils;
 using WatchTowerBackendTests.Room;
-using WatchTowerBackendTests.User;
 using WatchTowerBackendTests.Utils;
 
 namespace WatchTowerBackendTests.Camera;
@@ -19,7 +16,7 @@ public class CameraControllerTests
    public CameraControllerTests()
    {
       _httpClient = new();
-      _httpClient.BaseAddress = new Uri(Constants.ApiHttpUrl);
+      _httpClient.BaseAddress = new Uri("http://localhost:5000/");
    }
 
    // TODO Change this test

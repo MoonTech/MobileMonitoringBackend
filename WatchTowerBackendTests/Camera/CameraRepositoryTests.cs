@@ -1,7 +1,6 @@
-using WatchTowerAPI.BusinessLogical.Repositories.CameraRepository;
-using WatchTowerAPI.BusinessLogical.Repositories.RoomRepository;
-using WatchTowerAPI.Domain.Models;
-using WatchTowerBackendTests.Room;
+using WatchTowerBackend.BusinessLogical.Repositories.CameraRepository;
+using WatchTowerBackend.BusinessLogical.Repositories.RoomRepository;
+using WatchTowerBackend.Domain.Models;
 using WatchTowerBackendTests.Utils;
 
 namespace WatchTowerBackendTests.Camera;

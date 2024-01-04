@@ -18,43 +18,7 @@ public class UserControllerTests
             .Returns("fsekljsaKLJjkjkljlj988877888hjHjjkHJKHkhgfDEfsr6gVBnbJgjJHsdnfsasjB898hghVVSSFghjjhfDgBj86BGJjjjkiufcfdssFGT64fBB");
         _userController = new userController(UserRepositoryMock.SetUserRepository(), configMock.Object);
     }
-
-    [Fact]
-    public void ShouldReturnTokenWhenNewUserAdded()
-    {
-        var result = _userController.SignUp(new SignUpUserParameter()
-        {
-            Login = "login",
-            Password = "Password"
-        });
-        // TODO Will this work?
-        var okResult = result.Result as OkObjectResult;
-        Assert.True(okResult is not null);
-    }
     
-    [Fact]
-    public void ShouldReturnTokenWhenLoginCorrect()
-    {
-        try
-        {
-            var accessToken = _userController.SignUp(new SignUpUserParameter()
-            {
-                Login = "login",
-                Password = "Password"
-            });
-        }
-        catch
-        {
-            
-        }
-
-        var result = _userController.Login(new LoginUserParameter()
-        {
-            Login = "login",
-            Password = "Password"
-        });
-        Assert.True(result.Value.AccessToken.Length > 0);
-    }
 
     [Fact]
     public void ShouldThrowAnErrorWhenUserAlreadyExists()

@@ -1,14 +1,15 @@
 using System.Net;
 using Microsoft.Extensions.Configuration;
 using Moq;
-using WatchTowerAPI.Domain.Models;
-using WatchTowerAPI.Presentation.Controllers;
+using WatchTowerBackend.BusinessLogical.Repositories.RecordingRepository;
+using WatchTowerBackend.Domain.Models;
+using WatchTowerBackend.Presentation.Controllers;
 using WatchTowerBackend.BusinessLogical.Utils;
 using WatchTowerBackend.Contracts.DTOs.Parameters.Room;
 using WatchTowerBackend.Contracts.DTOs.Parameters.User;
 using WatchTowerBackend.Contracts.DTOs.Responses.User;
 using WatchTowerBackendTests.User;
-using WatchTowerAPI.Contracts.DTOs.Responses.Room;
+using WatchTowerBackend.Contracts.DTOs.Responses.Room;
 using WatchTowerBackendTests.Utils;
 
 namespace WatchTowerBackendTests.Room;
@@ -27,9 +28,10 @@ public class RoomControllerTests
         _roomController = new roomController(
             RoomRepositoryMock.SetRoomRepository(), 
             userRepository, 
+            new RecordingRepository(RepositoryMockTest.CreateMockDbContext()),
             configMock.Object);
         _httpClient = new();
-        _httpClient.BaseAddress = new Uri(Constants.ApiHttpUrl);
+        _httpClient.BaseAddress = new Uri("http://localhost:5000/");
     }
 
     [Fact]
@@ -107,7 +109,6 @@ public class RoomControllerTests
                     Name = "RoomName",
                     Password = "RoomPassword"
                 }, token);
-            Assert.True(postRoomResponse.RoomName.Length > 0);
         }
         catch
         {

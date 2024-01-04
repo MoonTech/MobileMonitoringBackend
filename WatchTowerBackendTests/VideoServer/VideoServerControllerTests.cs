@@ -1,16 +1,15 @@
 using System.Net;
 using Microsoft.Extensions.Configuration;
-using Microsoft.VisualBasic;
 using Moq;
-using WatchTowerAPI.Contracts.DTOs.Parameters.Camera;
-using WatchTowerAPI.Contracts.DTOs.Responses.Camera;
-using WatchTowerAPI.Domain.Models;
-using WatchTowerAPI.Presentation.Controllers;
+using WatchTowerBackend.BusinessLogical.Repositories.RecordingRepository;
+using WatchTowerBackend.BusinessLogical.Repositories.VideoServerRepository;
+using WatchTowerBackend.Contracts.DTOs.Parameters.Camera;
+using WatchTowerBackend.Contracts.DTOs.Responses.Camera;
+using WatchTowerBackend.Domain.Models;
+using WatchTowerBackend.Presentation.Controllers;
 using WatchTowerBackend.BusinessLogical.Services;
-using WatchTowerBackend.Contracts.DTOs.Parameters.VideoServer;
 using WatchTowerBackendTests.Camera;
 using WatchTowerBackendTests.Room;
-using WatchTowerBackendTests.User;
 using WatchTowerBackendTests.Utils;
 using Constants = WatchTowerBackend.BusinessLogical.Utils.Constants;
 
@@ -26,12 +25,16 @@ public class VideoServerControllerTests
     public VideoServerControllerTests()
     {
         var configMock = new Mock<IConfiguration>();
+        var videoServerHttpClient = new HttpClient();
+        videoServerHttpClient.BaseAddress = new Uri(Constants.RecordBaseUrl);
         configMock.Setup(c => c["Jwt:ApiKey"])
             .Returns("fsekljsaKLJjkjkljlj988877888hjHjjkHJKHkhgfDEfsr6gVBnbJgjJHsdnfsasjB898hghVVSSFghjjhfDgBj86BGJjjjkiufcfdssFGT64fBB");
         _videoServerController = new(CameraRepositoryMock.SetCameraRepository(ref _roomModel, ref _cameraModel),
-            configMock.Object, new RecordingCamerasCache());
+            new RecordingRepository(RepositoryMockTest.CreateMockDbContext()), 
+            RoomRepositoryMock.SetRoomRepository(), new RecordingCamerasCache(), 
+            new VideoServerRepository(videoServerHttpClient));
         _httpClient = new();
-        _httpClient.BaseAddress = new Uri(Constants.ApiHttpUrl);
+        _httpClient.BaseAddress = new Uri("http://localhost:5000/");
     }
 
     [Fact]
