@@ -101,6 +101,7 @@ public class CameraControllerTests
    {
       var userToken = await RoomControllerTests.GetUserToken(_httpClient); // TODO Move all the static methods to other place
       await RoomControllerTests.PopulateDbWithRoom(_httpClient, "Room1", "RoomPassword", userToken);
+      await PopulateDbWithCamera(_httpClient, "Camera1", "Room1", "RoomPassword",userToken);
       try
       {
          await _httpClient.SendRequest<PostCameraResponse>(RequestType.Post, "camera",
@@ -125,20 +126,7 @@ public class CameraControllerTests
    {
       var userToken = await RoomControllerTests.GetUserToken(_httpClient,"log","pass");
       await RoomControllerTests.PopulateDbWithRoom(_httpClient, "Room1", "RoomPassword", userToken);
-      try
-      {
-         await _httpClient.SendRequest<PostCameraResponse>(RequestType.Post, "camera",
-            new PostCameraParameter()
-            {
-               CameraName = "Camera1",
-               RoomName = "Room1",
-               Password = ""
-            });
-      }
-      catch
-      {
-         
-      }
+      await PopulateDbWithCamera(_httpClient, "Camera1", "Room1", "RoomPassword", userToken);
       var guid = await GetGuidOfCamera1Room1(_httpClient);
       var response = await _httpClient.SendRequestNoAnswerBody(RequestType.Put, $"camera", guid, token: userToken);
       Assert.True(response == HttpStatusCode.MethodNotAllowed);
@@ -156,5 +144,24 @@ public class CameraControllerTests
          .Select(c=>c.Id)
          .FirstOrDefault();
       return guid;
+   }
+
+   public static async Task PopulateDbWithCamera(HttpClient httpClient, string cameraName,
+      string roomName, string roomPassword, string token)
+   {
+      try
+      {
+         var postCameraResponse = await httpClient.SendRequest<PostRoomResponse>(RequestType.Post, "camera",
+            new PostCameraParameter()
+            {
+               CameraName = cameraName,
+               RoomName = roomName,
+               Password = roomPassword
+            }, token);
+      }
+      catch
+      {
+
+      }
    }
 }

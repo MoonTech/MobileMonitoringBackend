@@ -106,8 +106,8 @@ public class RoomControllerTests
             var postRoomResponse = await httpClient.SendRequest<PostRoomResponse>(RequestType.Post, "room",
                 new PostRoomParameter()
                 {
-                    Name = "RoomName",
-                    Password = "RoomPassword"
+                    Name = roomName,
+                    Password = roomPassword
                 }, token);
         }
         catch
