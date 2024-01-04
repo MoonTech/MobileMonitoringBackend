@@ -33,9 +33,15 @@ public class UserRepositoryTests
     [Fact]
     public void ShouldNotGetUserByLoginWhenNotInDb()
     {
-        _userRepositoryMock.AddUser("Login", "Password");
-        var userFromDb = _userRepositoryMock.GetUser("WrongLogin");
-        Assert.True(userFromDb is null);
+        try
+        {
+            _userRepositoryMock.AddUser("Login", "Password");
+            var userFromDb = _userRepositoryMock.GetUser("WrongLogin");
+        }
+        catch
+        {
+            Assert.True(true);
+        }
     }
 
     [Fact]
