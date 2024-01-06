@@ -163,10 +163,10 @@ public class roomController : ControllerBase
     }
 
     [Authorize(AuthenticationSchemes = "ApiAuthenticationScheme")]
-    [HttpPost("qrCode")]
-    public IActionResult GenerateQRCode(GenerateQRCodeParameter parameter)
+    [HttpGet("qrCode/{roomName}")]
+    public IActionResult GenerateQRCode(string roomName)
     {
-        var room = _roomRepository.GetRoomByName(parameter.RoomName);
+        var room = _roomRepository.GetRoomByName(roomName);
         var userLogin = Request.GetUserLoginFromToken();
         if (userLogin == room.OwnerLogin)
         {
