@@ -5,16 +5,16 @@ EXPOSE 443
 
 FROM mcr.microsoft.com/dotnet/sdk:7.0 AS build
 WORKDIR /src
-COPY ["WatchTowerBackend/WatchTowerBackend.csproj", "WatchTowerBackend/"]
-RUN dotnet restore "WatchTowerBackend/WatchTowerBackend.csproj"
+COPY ["MobileMonitoringBackend/MobileMonitoringBackend.csproj", "MobileMonitoringBackend/"]
+RUN dotnet restore "MobileMonitoringBackend/MobileMonitoringBackend.csproj"
 COPY . .
-WORKDIR "/src/WatchTowerBackend"
-RUN dotnet build "WatchTowerBackend.csproj" -c Release -o /app/build
+WORKDIR "/src/MobileMonitoringBackend"
+RUN dotnet build "MobileMonitoringBackend.csproj" -c Release -o /app/build
 
 FROM build AS publish
-RUN dotnet publish "WatchTowerBackend.csproj" -c Release -o /app/publish /p:UseAppHost=false
+RUN dotnet publish "MobileMonitoringBackend.csproj" -c Release -o /app/publish /p:UseAppHost=false
 
 FROM base AS final
 WORKDIR /app
 COPY --from=publish /app/publish .
-ENTRYPOINT ["dotnet", "WatchTowerBackend.dll"]
+ENTRYPOINT ["dotnet", "MobileMonitoringBackend.dll"]
