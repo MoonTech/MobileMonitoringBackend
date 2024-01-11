@@ -56,7 +56,7 @@ public class videoServerController : ControllerBase
         throw new Exception("Probably camera does not exist");
     }
 
-    [Authorize(AuthenticationSchemes = "ApiAuthenticationScheme")]
+    [Authorize(AuthenticationSchemes = Constants.ApiAuthScheme)]
     [HttpPut("record/start")]
     public async Task<IActionResult> StartRecording(StartRecordingParameter parameter)
     {
@@ -75,7 +75,7 @@ public class videoServerController : ControllerBase
         return Unauthorized("Authentication failed - camera does not exist or you are not an owner.");
     }
 
-    [Authorize(AuthenticationSchemes = "ApiAuthenticationScheme")]
+    [Authorize(AuthenticationSchemes = Constants.ApiAuthScheme)]
     [HttpPut("record/stop")]
     public async Task<IActionResult> StopRecording(StopRecordingParameter parameter)
     {
@@ -104,7 +104,7 @@ public class videoServerController : ControllerBase
         return Unauthorized("Authentication failed - camera does not exist or you are not an owner.");
     }
 
-    [Authorize(AuthenticationSchemes = "ApiAuthenticationScheme")]
+    [Authorize(AuthenticationSchemes = Constants.ApiAuthScheme)]
     [HttpGet("record/check")]
     public IActionResult CheckRecording([Required]Guid id)
     {
@@ -135,7 +135,7 @@ public class videoServerController : ControllerBase
         throw new Exception("Could not download recordings");
     }
 
-    [Authorize(AuthenticationSchemes = "ApiAuthenticationScheme")]
+    [Authorize(AuthenticationSchemes = Constants.ApiAuthScheme)]
     [HttpDelete("record/{recordingName}")]
     public async Task<IActionResult> DeleteRecording(string recordingName)
     {

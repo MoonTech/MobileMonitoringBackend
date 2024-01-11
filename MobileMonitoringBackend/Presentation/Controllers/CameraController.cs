@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using MobileMonitoringBackend.BusinessLogical.Authentication;
 using MobileMonitoringBackend.BusinessLogical.Repositories.CameraRepository;
 using MobileMonitoringBackend.BusinessLogical.Repositories.RoomRepository;
+using MobileMonitoringBackend.BusinessLogical.Utils;
 using MobileMonitoringBackend.Contracts.DTOs.Parameters.Camera;
 using MobileMonitoringBackend.Contracts.DTOs.Responses.Camera;
 
@@ -66,7 +67,7 @@ public class cameraController : ControllerBase
         return BadRequest("Camera could not be deleted");
     }
 
-    [Authorize(AuthenticationSchemes = "ApiAuthenticationScheme")]
+    [Authorize(AuthenticationSchemes = Constants.ApiAuthScheme)]
     [HttpPut("{id}")]
     public IActionResult AcceptCamera(Guid id)
     {

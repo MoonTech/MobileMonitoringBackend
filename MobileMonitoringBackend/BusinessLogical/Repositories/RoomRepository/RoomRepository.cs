@@ -58,8 +58,7 @@ public class RoomRepository : BaseRepository, IRoomRepository
             throw new Exception("Room does not exist");
         }
     }
-
-    // TODO Check whether it deletes cameras as well
+    
     public bool DeleteRoom(RoomModel roomToRemove)
     {
         context.Rooms.Remove(roomToRemove);

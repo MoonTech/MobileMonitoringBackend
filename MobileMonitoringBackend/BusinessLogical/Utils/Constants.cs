@@ -35,5 +35,8 @@ public static class Constants
             IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(config[signingKeyAppsettingsKey]))
         };
     }
-    // TODO Add constants for [Authorize] attribute
+
+    public const string ApiAuthScheme = "ApiAuthenticationScheme";
+    public const string RoomAuthScheme = "RoomAuthenticationScheme";
+    public const string MultiAuthSchemes = "MultiAuthSchemes";
 }

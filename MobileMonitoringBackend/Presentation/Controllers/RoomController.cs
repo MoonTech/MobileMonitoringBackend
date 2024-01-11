@@ -42,7 +42,7 @@ public class roomController : ControllerBase
         _config = config;
     }
 
-    [Authorize(AuthenticationSchemes = "ApiAuthenticationScheme")]
+    [Authorize(AuthenticationSchemes = Constants.ApiAuthScheme)]
     [HttpPost]
     public PostRoomResponse PostRoom(PostRoomParameter parameter)
     {
@@ -51,8 +51,7 @@ public class roomController : ControllerBase
         if (user is not null)
         {
             var newRoom = _roomRepository.CreateRoom(parameter.Name, parameter.Password, user);
-            // TODO Add room to user
-             if (newRoom is not null)
+            if (newRoom is not null)
             {
                 return new()
                 {
@@ -88,7 +87,7 @@ public class roomController : ControllerBase
 
     }
 
-    [Authorize(AuthenticationSchemes = "ApiAuthenticationScheme")]
+    [Authorize(AuthenticationSchemes = Constants.ApiAuthScheme)]
     [HttpDelete("{roomName}")]
     public IActionResult DeleteRoom(string roomName)
     {
@@ -105,7 +104,7 @@ public class roomController : ControllerBase
         return BadRequest("Could not delete room");
     }
 
-    [Authorize(AuthenticationSchemes = "ApiAuthenticationScheme")]
+    [Authorize(AuthenticationSchemes = Constants.ApiAuthScheme)]
     [HttpGet]
     public GetAllRoomsResponse GetAllRooms()
     {
@@ -121,7 +120,7 @@ public class roomController : ControllerBase
         throw new Exception("User does not exist in database");
     }
 
-    [Authorize(AuthenticationSchemes = "ApiAuthenticationScheme")]
+    [Authorize(AuthenticationSchemes = Constants.ApiAuthScheme)]
     [HttpGet("{roomName}")]
     public GetPendingCamerasResponse GetPendingCameras(string roomName)
     {
@@ -162,7 +161,7 @@ public class roomController : ControllerBase
         throw new Exception("Can not view recordings");
     }
 
-    [Authorize(AuthenticationSchemes = "ApiAuthenticationScheme")]
+    [Authorize(AuthenticationSchemes = Constants.ApiAuthScheme)]
     [HttpGet("qrCode/{roomName}")]
     public IActionResult GenerateQRCode(string roomName)
     {
