@@ -1,9 +1,9 @@
 version: "3.9"  # optional since v1.27.0
 services:
   web_api:
-    image: watchtowerapi
+    image: MobileMonitoringapi
     build: .
-    container_name: watchtowerapi_application
+    container_name: MobileMonitoringapi_application
     ports:
       - "5000:80"
     depends_on:
