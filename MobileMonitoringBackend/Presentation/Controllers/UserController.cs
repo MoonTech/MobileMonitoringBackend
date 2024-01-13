@@ -48,13 +48,13 @@ public class userController : ControllerBase
             };
             return Ok(result);
         }
-        catch (ObjectAlreadyExistsInDbException ex)
+        catch (MobileMonitoringException ex)
         {
-            return BadRequest(ex.Message);
+            return StatusCode(ex.HttpCode, new MobileMonitoringExceptionJSON(ex));
         }
         catch (Exception ex)
         {
-            return StatusCode(500, ex.Message);
+            return StatusCode(500, ex.Message); 
         }
     }
     
@@ -74,13 +74,9 @@ public class userController : ControllerBase
             };
             return Ok(result);
         }
-        catch (ObjectDoesNotExistInDbException ex)
+        catch (MobileMonitoringException ex)
         {
-            return NotFound(ex.Message);
-        }
-        catch (WrongPasswordException ex)
-        {
-            return BadRequest(ex.Message);
+            return StatusCode(ex.HttpCode, new MobileMonitoringExceptionJSON(ex));
         }
         catch (Exception ex)
         {
@@ -125,13 +121,13 @@ public class userController : ControllerBase
             }
             return BadRequest("Invalid refresh token");
         }
-        catch (ObjectDoesNotExistInDbException ex)
+        catch (MobileMonitoringException ex)
         {
-            return NotFound(ex.Message);
+            return StatusCode(ex.HttpCode, new MobileMonitoringExceptionJSON(ex));
         }
         catch (Exception ex)
-        {   
-            return StatusCode(500, ex.Message);
+        {
+            return StatusCode(500, ex.Message); 
         }
     }
 

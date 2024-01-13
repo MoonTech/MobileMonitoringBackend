@@ -4,8 +4,11 @@ using MobileMonitoringBackend.BusinessLogical.Authentication;
 using MobileMonitoringBackend.BusinessLogical.Repositories.CameraRepository;
 using MobileMonitoringBackend.BusinessLogical.Repositories.RoomRepository;
 using MobileMonitoringBackend.BusinessLogical.Utils;
+using MobileMonitoringBackend.BusinessLogical.Utils.Exceptions;
+using MobileMonitoringBackend.BusinessLogical.Utils.Exceptions.Room;
 using MobileMonitoringBackend.Contracts.DTOs.Parameters.Camera;
 using MobileMonitoringBackend.Contracts.DTOs.Responses.Camera;
+using MobileMonitoringBackend.Domain.Models;
 
 namespace MobileMonitoringBackend.Presentation.Controllers;
 
@@ -24,63 +27,84 @@ public class cameraController : ControllerBase
     }
 
     [HttpPost]
-    public PostCameraResponse PostCamera(PostCameraParameter parameter)
+    public ActionResult<PostCameraResponse> PostCamera(PostCameraParameter parameter)
     {
-        var roomParameter = _roomRepository.GetRoomByName(parameter.RoomName);
-        var userLogin = Request.GetUserLoginFromToken();
-        
-        if (roomParameter is null)
+        try
         {
-            throw new Exception("Such room does not exist");
-        }
-        if (userLogin == roomParameter.OwnerLogin
-            || _roomRepository.CheckRoomAndPassword(parameter.RoomName, parameter.Password))
-        {
-            var newCamera = _cameraRepository.CreateCameraWithRoom(
-                    parameter.CameraName, roomParameter);
-            if (newCamera is not null)
+            RoomModel roomParameter = _roomRepository.GetRoomByName(parameter.RoomName);
+            var userLogin = Request.GetUserLoginFromToken();
+            if (userLogin == roomParameter.OwnerLogin
+                || _roomRepository.CheckRoomAndPassword(parameter.RoomName, parameter.Password))
             {
+                var newCamera = _cameraRepository.CreateCameraWithRoom(
+                    parameter.CameraName, roomParameter);
                 if (userLogin == roomParameter.OwnerLogin)
                 {
                     _cameraRepository.AcceptCamera(newCamera);
                 }
-                return new PostCameraResponse()
+                return Ok(new PostCameraResponse()
                 {
                     Id = newCamera.Id
-                };
+                });
             }
+            throw new RoomPasswordWrongException(roomParameter.RoomName);
+        }        
+        catch (MobileMonitoringException ex)
+        {
+            return StatusCode(ex.HttpCode, new MobileMonitoringExceptionJSON(ex));
         }
-        throw new Exception("Can not add camera with room");
+        catch (Exception ex)
+        {
+            return StatusCode(500, ex.Message); 
+        }
     }
 
     [HttpDelete("{id}")]
     public IActionResult DeleteCamera(Guid id)
     {
-        var cameraToDelete = _cameraRepository.GetCameraById(id);
-        if (cameraToDelete is not null)
+        try
         {
+            var cameraToDelete = _cameraRepository.GetCameraById(id);
             if (_cameraRepository.DeleteCamera((cameraToDelete)))
             {
                 return Ok("Camera has been deleted");
             }
+            throw new CouldNotSaveChangesException();
         }
-        return BadRequest("Camera could not be deleted");
+        catch (MobileMonitoringException ex)
+        {
+            return StatusCode(ex.HttpCode, new MobileMonitoringExceptionJSON(ex));
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, ex.Message);
+        }
     }
 
     [Authorize(AuthenticationSchemes = Constants.ApiAuthScheme)]
     [HttpPut("{id}")]
     public IActionResult AcceptCamera(Guid id)
     {
-        var userLogin = Request.GetUserLoginFromToken();
-        var cameraToAccept = _cameraRepository.GetCameraById(id);
-        if (cameraToAccept is not null 
-            && userLogin == cameraToAccept.Room!.OwnerLogin)
+        try
         {
-            if (_cameraRepository.AcceptCamera(cameraToAccept))
+            var userLogin = Request.GetUserLoginFromToken();
+            var cameraToAccept = _cameraRepository.GetCameraById(id);
+            if (userLogin == cameraToAccept.Room!.OwnerLogin)
             {
-                return Ok("Camera Accepted");
+                if (_cameraRepository.AcceptCamera(cameraToAccept))
+                {
+                    return Ok("Camera Accepted");
+                }
             }
+            throw new CouldNotSaveChangesException();
         }
-        return BadRequest("Camera Could not be accepted");
+        catch (MobileMonitoringException ex)
+        {
+            return StatusCode(ex.HttpCode, new MobileMonitoringExceptionJSON(ex));
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, ex.Message); 
+        }
     }
 }

@@ -1,6 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using MobileMonitoringBackend.BusinessLogical.Utils;
 using MobileMonitoringBackend.BusinessLogical.Utils.Exceptions;
+using MobileMonitoringBackend.BusinessLogical.Utils.Exceptions.Room;
 using MobileMonitoringBackend.DataAccess.DbContexts;
 using MobileMonitoringBackend.Domain.Models;
 
@@ -25,11 +26,11 @@ public class RoomRepository : BaseRepository, IRoomRepository
             {
                 return newRoom;
             }
-            throw new CouldNotSaveChangesException("Could not save changes in database");
+            throw new CouldNotSaveChangesException();
         }
         catch
         {
-            throw new ObjectAlreadyExistsInDbException("Such an user already exists in database");
+            throw new RoomAlreadyExistsException(name);
         }
     }
 
@@ -43,21 +44,21 @@ public class RoomRepository : BaseRepository, IRoomRepository
             {
                 return result;
             }
-            throw new WrongPasswordException("Provided password is wrong");
+            throw new RoomPasswordWrongException(name);
         }
-        throw new ObjectDoesNotExistInDbException("Room with such a name does not exist");
+        throw new RoomDoesNotExistException(name);
     }
 
 
     public RoomModel GetRoomByName(string name)
     {
         var result = context.Rooms.Include(room => room.Cameras)
-            .SingleOrDefault(room => room.RoomName == name);
+                .SingleOrDefault(room => room.RoomName == name);
         if (result is not null)
         {
             return result;
         }
-        throw new ObjectDoesNotExistInDbException("Room of such a name does not exist");
+        throw new RoomDoesNotExistException(name);
     }
     
     public bool DeleteRoom(RoomModel roomToRemove)

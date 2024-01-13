@@ -1,6 +1,5 @@
 ﻿using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
-using System.Text;
 using System.Text.Json;
 using Azure;
 using Microsoft.AspNetCore.Authorization;
@@ -14,6 +13,8 @@ using MobileMonitoringBackend.BusinessLogical.Repositories.RecordingRepository;
 using MobileMonitoringBackend.BusinessLogical.Repositories.RoomRepository;
 using MobileMonitoringBackend.BusinessLogical.Repositories.UserRepository;
 using MobileMonitoringBackend.BusinessLogical.Utils;
+using MobileMonitoringBackend.BusinessLogical.Utils.Exceptions;
+using MobileMonitoringBackend.BusinessLogical.Utils.Exceptions.Room;
 using MobileMonitoringBackend.Contracts.DTOs.Parameters.Room;
 using MobileMonitoringBackend.Contracts.DTOs.Responses.Room;
 using MobileMonitoringBackend.Domain.Models;
@@ -28,6 +29,7 @@ public class roomController : ControllerBase
     private readonly IUserRepository _userRepository;
     private readonly IRecordingRepository _recordingRepository;
     private readonly IConfiguration _config;
+    // TODO move _tokenValidHours everywhere to constants
     private readonly int _tokenValidHours = 1;
     private readonly int _refreshTokenValidHours = 1;
 
@@ -44,22 +46,26 @@ public class roomController : ControllerBase
 
     [Authorize(AuthenticationSchemes = Constants.ApiAuthScheme)]
     [HttpPost]
-    public PostRoomResponse PostRoom(PostRoomParameter parameter)
+    public ActionResult<PostRoomResponse> PostRoom(PostRoomParameter parameter)
     {
-        var userLogin = Request.GetUserLoginFromToken();
-        var user = _userRepository.GetUser(userLogin);
-        if (user is not null)
+        try
         {
-            var newRoom = _roomRepository.CreateRoom(parameter.Name, parameter.Password, user);
-            if (newRoom is not null)
+            var userLogin = Request.GetUserLoginFromToken();
+            var user = _userRepository.GetUser(userLogin);
+            _roomRepository.CreateRoom(parameter.Name, parameter.Password, user);
+            return Ok(new PostRoomResponse()
             {
-                return new()
-                {
-                    RoomName = parameter.Name
-                };
-            }
+                RoomName = parameter.Name
+            });
         }
-        throw new Exception("Could not add room");
+        catch (MobileMonitoringException ex)
+        {
+            return StatusCode(ex.HttpCode, new MobileMonitoringExceptionJSON(ex));
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, ex.Message); 
+        }
     }
 
     [Authorize]
@@ -91,17 +97,27 @@ public class roomController : ControllerBase
     [HttpDelete("{roomName}")]
     public IActionResult DeleteRoom(string roomName)
     {
-        var userLogin = Request.GetUserLoginFromToken();
-        var roomToDelete = _roomRepository.GetRoomByName(roomName);
-        if (roomToDelete is not null
-            && roomToDelete.OwnerLogin == userLogin)
+        try
         {
-            if (_roomRepository.DeleteRoom(roomToDelete))
+            var userLogin = Request.GetUserLoginFromToken();
+            var roomToDelete = _roomRepository.GetRoomByName(roomName);
+            if (roomToDelete.OwnerLogin == userLogin)
             {
-                return Ok("Room has been succesfully removed");
+                if (_roomRepository.DeleteRoom(roomToDelete))
+                {
+                    return Ok("Room has been succesfully removed");
+                }
             }
+            throw new RoomPasswordWrongException(roomName);
         }
-        return BadRequest("Could not delete room");
+        catch (MobileMonitoringException ex)
+        {
+            return StatusCode(ex.HttpCode, new MobileMonitoringExceptionJSON(ex));
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, ex.Message); 
+        }
     }
 
     [Authorize(AuthenticationSchemes = Constants.ApiAuthScheme)]
