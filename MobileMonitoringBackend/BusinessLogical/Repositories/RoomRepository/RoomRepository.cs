@@ -8,27 +8,28 @@ namespace MobileMonitoringBackend.BusinessLogical.Repositories.RoomRepository;
 
 public class RoomRepository : BaseRepository, IRoomRepository
 {
-    public RoomRepository(MobileMonitoringDbContext context) : base(context)
-    {
-    }
+    public RoomRepository(MobileMonitoringDbContext context) : base(context) {}
 
-    public RoomModel? CreateRoom(string name, string password, UserModel owner)
+    public RoomModel CreateRoom(string name, string password, UserModel owner)
     {
-        var newRoom = context.Rooms.Add(
-                new RoomModel()
+        try
+        {
+            var newRoom = new RoomModel()
                 {
                     RoomName = name,
                     Password = PasswordHash.HashPassword(password),
                     Owner = owner
-                })
-            .Entity;
-        if (SaveChanges())
-        {
-            return newRoom;
+                };
+            context.Rooms.Add(newRoom);
+            if (SaveChanges())
+            {
+                return newRoom;
+            }
+            throw new CouldNotSaveChangesException("Could not save changes in database");
         }
-        else
+        catch
         {
-            return null;
+            throw new ObjectAlreadyExistsInDbException("Such an user already exists in database");
         }
     }
 
@@ -68,8 +69,11 @@ public class RoomRepository : BaseRepository, IRoomRepository
     public bool CheckRoomAndPassword(string roomName, string? password)
     {
         var roomToCheck = context.Rooms.Find(roomName);
-        return PasswordHash.VerifyPassword(password, roomToCheck.Password);
+        if (roomToCheck is not null)
+        {
+            return PasswordHash.VerifyPassword(password, roomToCheck.Password);
+        }
+        return false;
     }
-
-
+    
 }

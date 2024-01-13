@@ -89,8 +89,8 @@ builder.Services.AddAuthorization(options =>
     options.AddPolicy(Constants.ApiAuthScheme, apiAuthenticationScheme
         .RequireAuthenticatedUser()
         .Build());
-    var RoomAuthenticationScheme = new AuthorizationPolicyBuilder(Constants.RoomAuthScheme);
-    options.AddPolicy(Constants.RoomAuthScheme, RoomAuthenticationScheme
+    var roomAuthenticationScheme = new AuthorizationPolicyBuilder(Constants.RoomAuthScheme);
+    options.AddPolicy(Constants.RoomAuthScheme, roomAuthenticationScheme
         .RequireAuthenticatedUser()
         .Build());
 });

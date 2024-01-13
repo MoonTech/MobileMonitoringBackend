@@ -11,7 +11,7 @@ public class UserRepository : BaseRepository, IUserRepository
 {
     public UserRepository(MobileMonitoringDbContext context) : base(context) {}
     
-    public UserModel? AddUser(string login, string password)
+    public UserModel AddUser(string login, string password)
     {
         var newUser = new UserModel()
         {
