@@ -1,4 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using MobileMonitoringBackend.BusinessLogical.Utils.Exceptions;
 using MobileMonitoringBackend.DataAccess.DbContexts;
 using MobileMonitoringBackend.Domain.Models;
 
@@ -28,7 +29,7 @@ public class CameraRepository : BaseRepository, ICameraRepository
         }
     }
 
-    public CameraModel? GetCameraById(Guid id)
+    public CameraModel GetCameraById(Guid id)
     {
         var result = context.Cameras.Include(camera => camera.Room)
             .SingleOrDefault(camera => camera.Id == id);
@@ -36,11 +37,7 @@ public class CameraRepository : BaseRepository, ICameraRepository
         {
             return result;
         }
-        // TODO Create own exception type
-        else
-        {
-            throw new Exception("Camera does not exist");
-        }
+        throw new ObjectDoesNotExistInDbException("Camera does not exist");
     }
 
     public bool DeleteCamera(CameraModel camera)
