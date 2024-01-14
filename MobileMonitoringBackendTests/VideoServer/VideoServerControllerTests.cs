@@ -40,11 +40,11 @@ public class VideoServerControllerTests
     [Fact]
     public void StreamUrlShouldReturnUrl()
     {
-        var response = _videoServerController.getStreamUrl(new()
+        var response = _videoServerController.GetStreamUrl(new()
         {
             CameraId = _cameraModel.Id
         });
-        Assert.True(response.StreamUrl.Length > 0);
+        Assert.True(response.Value!.StreamUrl.Length > 0);
     }
 
     [Fact]

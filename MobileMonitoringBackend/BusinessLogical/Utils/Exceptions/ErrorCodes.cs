@@ -23,8 +23,19 @@ public static class ErrorCodes
     public const string CameraAlreadyAccepted = "camera-already-accepted";
     #endregion
 
+    #region RecordingErrorCodes
+    public const string RecordingAlreadyExists = "recording-already-exists";
+    public const string RecordingDoesNotExist = "recording-does-not-exist";
+    public const string RecordingCamerasCache = "recording-cameras-cache-exception";
+    #endregion
+
+    #region VideoServerErrorCodes
+    public const string VideoServerCommunication = "video-server-comminication-exception";
+    #endregion
+
     #region OtherErrorCodes
     public const string CouldNotSaveChanges = "could-not-save-changes";
+    public const string InvalidRefreshToken = "invalid-refresh-token";
     #endregion
 
 }

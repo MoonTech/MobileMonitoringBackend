@@ -296,7 +296,7 @@ public class roomController : ControllerBase
                 return Ok(result);
             }
             throw new MobileMonitoringException(StatusCodes.Status400BadRequest,
-                "invalid-refresh-token",
+                ErrorCodes.InvalidRefreshToken,
                 "Invalid refresh token");
         }
         catch (MobileMonitoringException ex)

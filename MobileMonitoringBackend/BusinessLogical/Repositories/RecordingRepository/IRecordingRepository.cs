@@ -4,8 +4,8 @@ namespace MobileMonitoringBackend.BusinessLogical.Repositories.RecordingReposito
 
 public interface IRecordingRepository
 {
-    public RecordingModel? AddRecording(string fileName, string fileUrl, RoomModel room);
+    public RecordingModel AddRecording(string fileName, string fileUrl, RoomModel room);
     public ICollection<RecordingModel> GetRoomRecordings(RoomModel room);
-    public RecordingModel? GetRecording(string fileName);
+    public RecordingModel GetRecording(string fileName);
     public bool DeleteRecording(RecordingModel recording);
 }

@@ -32,8 +32,4 @@
       </Content>
     </ItemGroup>
 
-    <ItemGroup>
-      <Folder Include="BusinessLogical\Utils\Exceptions\VideoServer\" />
-    </ItemGroup>
-
 </Project>
