@@ -28,7 +28,7 @@ public class CameraRepository : BaseRepository, ICameraRepository
             }
             throw new CouldNotSaveChangesException();
         }
-        catch (Exception ex)
+        catch (Exception)
         {
             throw new CameraAlreadyExistsException
                 ($"Camera {cameraName} already exists in room {room.RoomName}");
@@ -55,12 +55,15 @@ public class CameraRepository : BaseRepository, ICameraRepository
     public bool AcceptCamera(CameraModel camera)
     {
         camera.AcceptationState = true;
-        return SaveChanges();
+        if (SaveChanges())
+        {
+            return true;
+        }
+        throw new CameraAlreadyAcceptedException(camera.Id);
     }
     
     private string CreateCameraToken(int length)
     {
-        
         Random random = new Random();
         const string chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
         bool foundUniqueToken = false;

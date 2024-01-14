@@ -1,7 +1,6 @@
 ﻿using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text.Json;
-using Azure;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.IdentityModel.Tokens;
@@ -70,27 +69,36 @@ public class roomController : ControllerBase
 
     [Authorize]
     [HttpPost("watch")]
-    public WatchResponse Watch(WatchParameter parameter)
+    public ActionResult<WatchResponse> Watch(WatchParameter parameter)
     {
-        var room = _roomRepository.GetRoomByName(parameter.RoomName);
-        if(AuthorizeRoomSpectator(room))
+        try
         {
-            var response = new WatchResponse()
+            var room = _roomRepository.GetRoomByName(parameter.RoomName);
+            if (AuthorizeRoomSpectator(room))
             {
-                RoomName = room.RoomName
-            };
-            foreach (var camera in room.Cameras)
-            {
-                if (camera.AcceptationState)
+                var response = new WatchResponse()
                 {
-                    response.ConnectedCameras.Add(camera);
+                    RoomName = room.RoomName
+                };
+                foreach (var camera in room.Cameras)
+                {
+                    if (camera.AcceptationState)
+                    {
+                        response.ConnectedCameras.Add(camera);
+                    }
                 }
+                return Ok(response);
             }
-            return response;
+            throw new RoomAccessDeniedException(room.RoomName);
         }
-
-        throw new Exception("Can not view pending cameras");
-
+        catch (MobileMonitoringException ex)
+        {
+            return StatusCode(ex.HttpCode, new MobileMonitoringExceptionJSON(ex));
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, ex.Message); 
+        }
     }
 
     [Authorize(AuthenticationSchemes = Constants.ApiAuthScheme)]
@@ -108,7 +116,7 @@ public class roomController : ControllerBase
                     return Ok("Room has been succesfully removed");
                 }
             }
-            throw new RoomPasswordWrongException(roomName);
+            throw new RoomWrongOwnerException();
         }
         catch (MobileMonitoringException ex)
         {
@@ -122,125 +130,183 @@ public class roomController : ControllerBase
 
     [Authorize(AuthenticationSchemes = Constants.ApiAuthScheme)]
     [HttpGet]
-    public GetAllRoomsResponse GetAllRooms()
+    public ActionResult<GetAllRoomsResponse> GetAllRooms()
     {
-        var login = Request.GetUserLoginFromToken();
-        var user = _userRepository.GetUser(login);
-        if (user is not null)
+        try
         {
-            return new()
+            var login = Request.GetUserLoginFromToken();
+            var user = _userRepository.GetUser(login);
+            return Ok(new GetAllRoomsResponse
             {
                 Rooms = WithoutPasswordConverter.RoomCollectionConverter(user.Rooms)
-            };
+            });
         }
-        throw new Exception("User does not exist in database");
+        catch (MobileMonitoringException ex)
+        {
+            return StatusCode(ex.HttpCode, new MobileMonitoringExceptionJSON(ex));
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, ex.Message); 
+        }
     }
 
     [Authorize(AuthenticationSchemes = Constants.ApiAuthScheme)]
     [HttpGet("{roomName}")]
-    public GetPendingCamerasResponse GetPendingCameras(string roomName)
+    public ActionResult<GetPendingCamerasResponse> GetPendingCameras(string roomName)
     {
-        var login = Request.GetUserLoginFromToken();
-        var user = _userRepository.GetUser(login);
-        var room = _roomRepository.GetRoomByName(roomName);
-        if (user is not null 
-            && room is not null
-            && room.OwnerLogin == login)
+        try
         {
-            var response = new GetPendingCamerasResponse();
-            foreach (var camera in room.Cameras)
+            var login = Request.GetUserLoginFromToken();
+            var room = _roomRepository.GetRoomByName(roomName);
+            if (room.OwnerLogin == login)
             {
-                if (camera.AcceptationState == false)
+                var response = new GetPendingCamerasResponse();
+                foreach (var camera in room.Cameras)
                 {
-                    response.PendingCameras.Add(camera);
+                    if (camera.AcceptationState == false)
+                    {
+                        response.PendingCameras.Add(camera);
+                    }
                 }
+                return Ok(response);
             }
-            return response;
+            throw new RoomWrongOwnerException();
         }
-        throw new Exception("Cannot view pending cameras");
+        catch (MobileMonitoringException ex)
+        {
+            return StatusCode(ex.HttpCode, new MobileMonitoringExceptionJSON(ex));
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, ex.Message); 
+        }
     }
 
     [Authorize]
     [HttpGet("recordings/{roomName}")]
-    public GetRecordingsResponse GetRecordings(string roomName)
+    public ActionResult<GetRecordingsResponse> GetRecordings(string roomName)
     {
-        var room = _roomRepository.GetRoomByName(roomName);
-        if (AuthorizeRoomSpectator(room))
+        try
         {
-            var recordings = WithoutPasswordConverter.RecordingCollectionConverter(
-                _recordingRepository.GetRoomRecordings(room));
-            return new()
+            var room = _roomRepository.GetRoomByName(roomName);
+            if (AuthorizeRoomSpectator(room))
             {
-                Recordings = recordings
-            };
+                var recordings = WithoutPasswordConverter.RecordingCollectionConverter(
+                    _recordingRepository.GetRoomRecordings(room));
+                return Ok(new GetRecordingsResponse
+                {
+                    Recordings = recordings
+                });
+            }
+            throw new RoomAccessDeniedException(roomName);
         }
-        throw new Exception("Can not view recordings");
+        catch (MobileMonitoringException ex)
+        {
+            return StatusCode(ex.HttpCode, new MobileMonitoringExceptionJSON(ex));
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, ex.Message); 
+        }
     }
 
     [Authorize(AuthenticationSchemes = Constants.ApiAuthScheme)]
     [HttpGet("qrCode/{roomName}")]
-    public IActionResult GenerateQRCode(string roomName)
+    public IActionResult GenerateQrCode(string roomName)
     {
-        var room = _roomRepository.GetRoomByName(roomName);
-        var userLogin = Request.GetUserLoginFromToken();
-        if (userLogin == room.OwnerLogin)
+        try
         {
-            var qrBodyObject = new
+            var room = _roomRepository.GetRoomByName(roomName);
+            var userLogin = Request.GetUserLoginFromToken();
+            if (userLogin == room.OwnerLogin)
             {
-                roomName = room.RoomName,
-                token = GenerateRoomToken(room),
-                refreshToken = GenerateRefreshToken(room)
-            };
-            string qrBodyString = JsonSerializer.Serialize(qrBodyObject);
-            var qrCodeStreamName = room.RoomName + "_qr.png";
-            return GenerateQRCodePngResponse(qrBodyString, qrCodeStreamName);
+                var qrBodyObject = new
+                {
+                    roomName = room.RoomName,
+                    token = GenerateRoomToken(room),
+                    refreshToken = GenerateRefreshToken(room)
+                };
+                string qrBodyString = JsonSerializer.Serialize(qrBodyObject);
+                var qrCodeStreamName = room.RoomName + "_qr.png";
+                return GenerateQrCodePngResponse(qrBodyString, qrCodeStreamName);
+            }
+            throw new RoomWrongOwnerException();
         }
-        throw new Exception("You are not an owner of this room");
+        catch (MobileMonitoringException ex)
+        {
+            return StatusCode(ex.HttpCode, new MobileMonitoringExceptionJSON(ex));
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, ex.Message); 
+        }
     }
     
     
 
     [AllowAnonymous]
     [HttpPost("token")]
-    public GenerateTokenResponse GenerateToken(GenerateTokenParameter parameter)
+    public ActionResult<GenerateTokenResponse> GenerateToken(GenerateTokenParameter parameter)
     {
-        var room = AuthenticateRoom(parameter);
-        if (room is not null)
+        try
         {
+            var room = _roomRepository.GetRoom(parameter.RoomName, parameter.Password);
             var token = GenerateRoomToken(room);
             var refreshToken = GenerateRefreshToken(room);
             SetRefreshToken(refreshToken, room.RoomName);
-            return new()
+            return Ok(new GenerateTokenResponse
             {
                 AccessToken = token
-            };
+            });
         }
-        throw new RequestFailedException("Authorization failed");
+        catch (MobileMonitoringException ex)
+        {
+            return StatusCode(ex.HttpCode, new MobileMonitoringExceptionJSON(ex));
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, ex.Message); 
+        }
     }
 
     [AllowAnonymous]
     [HttpPost("refreshToken/{roomName}")]
     public ActionResult<RefreshRoomTokenResponse> RefreshToken(string roomName)
     {
-        var refreshToken = Request.Cookies["refreshToken"];
-        var roomNameFromCookie = JwtSecurityTokenExtension.GetClaim(refreshToken, "RoomName");
-        if (Request.GetRoomNameFromToken() != roomNameFromCookie || roomNameFromCookie != roomName)
+        try
         {
-            return BadRequest("Different rooms in access token and refresh token.");
-        }
-        var room = _roomRepository.GetRoomByName(roomName);
-        if (ValidateRefreshToken(refreshToken))
-        {
-            var newRefreshToken = GenerateRefreshToken(room);
-            SetRefreshToken(newRefreshToken, roomName);
-            string token = GenerateRoomToken(room);
-            var result = new RefreshRoomTokenResponse()
+            var refreshToken = Request.Cookies["refreshToken"];
+            var roomNameFromCookie = JwtSecurityTokenExtension.GetClaim(refreshToken, "RoomName");
+            if (Request.GetRoomNameFromToken() != roomNameFromCookie || roomNameFromCookie != roomName)
             {
-                accessToken = token
-            };
-            return Ok(result);
+                throw new RoomAccessRefreshException();
+            }
+
+            var room = _roomRepository.GetRoomByName(roomName);
+            if (ValidateRefreshToken(refreshToken))
+            {
+                var newRefreshToken = GenerateRefreshToken(room);
+                SetRefreshToken(newRefreshToken, roomName);
+                string token = GenerateRoomToken(room);
+                var result = new RefreshRoomTokenResponse()
+                {
+                    accessToken = token
+                };
+                return Ok(result);
+            }
+            throw new MobileMonitoringException(StatusCodes.Status400BadRequest,
+                "invalid-refresh-token",
+                "Invalid refresh token");
         }
-        return BadRequest("Refresh token invlaid.");
+        catch (MobileMonitoringException ex)
+        {
+            return StatusCode(ex.HttpCode, new MobileMonitoringExceptionJSON(ex));
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, ex.Message); 
+        }
     }
     
     // Additional Methods
@@ -268,12 +334,6 @@ public class roomController : ControllerBase
                 new Claim("RoomName", room.RoomName),
                 new Claim("type", "RoomRefreshToken")
             });
-    }
-    
-    private RoomModel? AuthenticateRoom(GenerateTokenParameter room)
-    {
-        var roomFromDb = _roomRepository.GetRoom(room.RoomName, room.Password);
-        return roomFromDb;
     }
 
     private bool AuthorizeRoomSpectator(RoomModel room)
@@ -307,7 +367,7 @@ public class roomController : ControllerBase
         return buffer;
     }
 
-    private IActionResult GenerateQRCodePngResponse(string qrContent, string fileName)
+    private IActionResult GenerateQrCodePngResponse(string qrContent, string fileName)
     {
         var qrByteArray = GenerateQRbyteArray(qrContent);
         return File(qrByteArray, "application/force-download", fileName);
@@ -343,10 +403,10 @@ public class roomController : ControllerBase
             var tokenHandler = new JwtSecurityTokenHandler();
             TokenValidationParameters tokenValidationParameters = Constants.TokenValidationParameters(
                 _config, "Jwt:RoomRefreshKey");
-            tokenHandler.ValidateToken(refreshToken, tokenValidationParameters, out SecurityToken validatedToken);
+            tokenHandler.ValidateToken(refreshToken, tokenValidationParameters, out _);
             return true;
         }
-        catch (SecurityTokenValidationException ex)
+        catch (SecurityTokenValidationException)
         {
             return false;
         }

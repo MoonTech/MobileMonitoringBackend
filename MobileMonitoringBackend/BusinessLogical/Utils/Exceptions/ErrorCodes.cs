@@ -12,12 +12,15 @@ public static class ErrorCodes
     public const string RoomAlreadyExists = "room-already-exists";
     public const string RoomPasswordWrong = "room-password-wrong";
     public const string RoomDoesNotExist = "room-does-not-exist";
-    public const string WrongOwner = "you-are-not-an-owner";
+    public const string RoomWrongOwner = "you-are-not-an-owner";
+    public const string RoomAccessDenied = "access-to-room-denied";
+    public const string RoomAccessRefresh = "different-access-refresh-token";
     #endregion
 
     #region CameraErrorCodes
     public const string CameraAlreadyExists = "camera-already-exists";
     public const string CameraDoesNotExist = "camera-does-not-exist";
+    public const string CameraAlreadyAccepted = "camera-already-accepted";
     #endregion
 
     #region OtherErrorCodes

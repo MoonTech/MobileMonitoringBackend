@@ -32,7 +32,15 @@ public class cameraController : ControllerBase
         try
         {
             RoomModel roomParameter = _roomRepository.GetRoomByName(parameter.RoomName);
-            var userLogin = Request.GetUserLoginFromToken();
+            string? userLogin;
+            try
+            {
+                userLogin = Request.GetUserLoginFromToken();
+            }
+            catch (Exception ex)
+            {
+                userLogin = null;
+            }
             if (userLogin == roomParameter.OwnerLogin
                 || _roomRepository.CheckRoomAndPassword(parameter.RoomName, parameter.Password))
             {
