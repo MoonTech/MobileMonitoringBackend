@@ -79,7 +79,7 @@ public class videoServerController : ControllerBase
                 var response =
                     await _videoServerRepository.StartRecording(Constants.StartRecordingEndpoint(camera.CameraToken));
                 if (response.StatusCode == HttpStatusCode.OK 
-                    && !_recordingCamerasCache.Contains(parameter.CameraId))
+                    && !(_recordingCamerasCache.Contains(parameter.CameraId)))
                 {
                     _recordingCamerasCache.Add(parameter.CameraId);
                     return Ok($"Started recording for camera {parameter.CameraId}");
