@@ -50,7 +50,7 @@ public class RoomControllerTests
     [Fact]
     public async Task PostRoomShouldReturnRoomNameWhenAuthorized()
     {
-        var userToken = await GetUserToken(_httpClient);
+        var userToken = await _httpClient.GetUserToken();
         await PopulateDbWithRoom(_httpClient, "Room", "Password", userToken);
         Assert.True(true);
     }
@@ -58,7 +58,7 @@ public class RoomControllerTests
     [Fact]
     public async Task GetRoomShouldReturnListOfRooms()
     {
-        var userToken = await GetUserToken(_httpClient);
+        var userToken = await _httpClient.GetUserToken();
         await PopulateDbWithRoom(_httpClient, "Room1", "RoomPassword", userToken);
         await PopulateDbWithRoom(_httpClient, "Room2", "RoomPassword", userToken);
         var postRoomRespone = await _httpClient.SendRequest<GetAllRoomsResponse>(RequestType.Get, "room", null, userToken);
@@ -68,7 +68,7 @@ public class RoomControllerTests
     [Fact]
     public async Task RoomTokenShouldReturnToken()
     {
-        var userToken = await GetUserToken(_httpClient);
+        var userToken = await _httpClient.GetUserToken();
         await PopulateDbWithRoom(_httpClient, "RoomName", "RoomPassword", userToken);
         var roomToken = await _httpClient.SendRequest<GenerateTokenResponse>(RequestType.Post,
             "room/token", new GenerateTokenParameter()
@@ -82,7 +82,7 @@ public class RoomControllerTests
     [Fact]
     public async Task RoomDeleteShouldReturn200()
     {
-        var userToken = await GetUserToken(_httpClient);
+        var userToken = await _httpClient.GetUserToken();
         await PopulateDbWithRoom(_httpClient, "RoomName", "RoomPassword", userToken);
         var statusCode = await _httpClient.SendRequestNoAnswerBody(RequestType.Delete, "room/RoomName");
         Assert.True(statusCode == HttpStatusCode.OK);
@@ -115,30 +115,7 @@ public class RoomControllerTests
 
         }
     }
-    
-    public static async Task<string> GetUserToken(HttpClient httpClient, 
-        string userLogin="UserLogin", string userPassword="UserPassword")
-    {
-        try
-        {
-            var userToken = (await httpClient.SendRequest<SignUpUserResponse>(RequestType.Post, "user", new SignUpUserParameter()
-            {
-                Login = userLogin,
-                Password = userPassword
-            })).AccessToken;
-            return userToken;
-        }
-        catch
-        {
-            var userToken = await httpClient.SendRequest<SignUpUserResponse>(RequestType.Post, "user/login", new SignUpUserParameter()
-            {
-                Login = "UserLogin",
-                Password = "UserPassword"
-            });
-            return userToken.AccessToken;
-        }
-    }
-    
+
     public static RoomModel exampleRoomModel
     {
         get

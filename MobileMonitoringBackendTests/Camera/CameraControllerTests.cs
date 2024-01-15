@@ -23,7 +23,7 @@ public class CameraControllerTests
    [Fact]
    public async Task PostCameraShouldReturnErrorIfTwiceTheSameRoom()
    {
-      var userToken = await RoomControllerTests.GetUserToken(_httpClient); // TODO Move all the static methods to other place
+      var userToken = await _httpClient.GetUserToken();
       await RoomControllerTests.PopulateDbWithRoom(_httpClient, "Room1", "RoomPassword", userToken);
       try
       {
@@ -51,7 +51,7 @@ public class CameraControllerTests
    [Fact]
    public async Task CameraPostShouldReturnId()
    {
-      var userToken = await RoomControllerTests.GetUserToken(_httpClient); // TODO Move all the static methods to other place
+      var userToken = await _httpClient.GetUserToken();
       await RoomControllerTests.PopulateDbWithRoom(_httpClient, "Room1", "RoomPassword", userToken);
       try
       {
@@ -75,7 +75,7 @@ public class CameraControllerTests
    [Fact]
    public async Task DeleteCameraShouldReturn200()
    {
-      var userToken = await RoomControllerTests.GetUserToken(_httpClient); // TODO Move all the static methods to other place
+      var userToken = await _httpClient.GetUserToken();
       await RoomControllerTests.PopulateDbWithRoom(_httpClient, "Room1", "RoomPassword", userToken);
       try
       {
@@ -99,7 +99,7 @@ public class CameraControllerTests
    [Fact]
    public async Task CameraPutShouldReturn405IfCameraAccepted()
    {
-      var userToken = await RoomControllerTests.GetUserToken(_httpClient); // TODO Move all the static methods to other place
+      var userToken = await _httpClient.GetUserToken();
       await RoomControllerTests.PopulateDbWithRoom(_httpClient, "Room1", "RoomPassword", userToken);
       await PopulateDbWithCamera(_httpClient, "Camera1", "Room1", "RoomPassword",userToken);
       try
@@ -124,7 +124,7 @@ public class CameraControllerTests
    [Fact]
    public async Task CameraPutShouldReturn200IfCameraNotAccepted()
    {
-      var userToken = await RoomControllerTests.GetUserToken(_httpClient,"log","pass");
+      var userToken = await _httpClient.GetUserToken("log","pass");
       await RoomControllerTests.PopulateDbWithRoom(_httpClient, "Room1", "RoomPassword", userToken);
       await PopulateDbWithCamera(_httpClient, "Camera1", "Room1", "RoomPassword", userToken);
       var guid = await GetGuidOfCamera1Room1(_httpClient);
@@ -134,7 +134,7 @@ public class CameraControllerTests
 
    public static async Task<Guid> GetGuidOfCamera1Room1(HttpClient httpClient)
    {
-      var userToken = await RoomControllerTests.GetUserToken(httpClient);
+      var userToken = await httpClient.GetUserToken();
       var listOfRooms = await httpClient.SendRequest<GetAllRoomsResponse>(RequestType.Get, "room", token:userToken);
       var guid = listOfRooms.Rooms
          .Where(r => r.RoomName == "Room1")

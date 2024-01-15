@@ -1,5 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using MobileMonitoringBackend.BusinessLogical.Utils;
+using MobileMonitoringBackend.BusinessLogical.Utils.Exceptions;
+using MobileMonitoringBackend.BusinessLogical.Utils.Exceptions.Room;
 using MobileMonitoringBackend.DataAccess.DbContexts;
 using MobileMonitoringBackend.Domain.Models;
 
@@ -9,73 +11,70 @@ public class RoomRepository : BaseRepository, IRoomRepository
 {
     public RoomRepository(MobileMonitoringDbContext context) : base(context) {}
 
-    public RoomModel? CreateRoom(string name, string password, UserModel owner)
+    public RoomModel CreateRoom(string name, string password, UserModel owner)
     {
-        var newRoom = context.Rooms.Add(
-            new RoomModel()
+        try
+        {
+            var newRoom = new RoomModel()
+                {
+                    RoomName = name,
+                    Password = PasswordHash.HashPassword(password),
+                    Owner = owner
+                };
+            context.Rooms.Add(newRoom);
+            if (SaveChanges())
             {
-                RoomName = name,
-                Password = PasswordHash.HashPassword(password),
-                Owner = owner
-            })
-            .Entity;
-        if (SaveChanges())
-        {
-            return newRoom;
+                return newRoom;
+            }
+            throw new CouldNotSaveChangesException();
         }
-        else
+        catch
         {
-            return null;
+            throw new RoomAlreadyExistsException(name);
         }
     }
 
-    public RoomModel? GetRoom(string name, string password)
-    {
-        var result = context.Rooms.Include(room => room.Cameras)
-            .SingleOrDefault(room => room.RoomName == name);
-        if (result is not null && PasswordHash.VerifyPassword(password, result.Password))
-        {
-            return result;
-        }
-        // TODO Create own exception type
-        else
-        {
-            throw new Exception("Room does not exist or password is incorrect");
-        }
-    }
-
-    public RoomModel GetRoomByName(string name)
+    public RoomModel GetRoom(string name, string password)
     {
         var result = context.Rooms.Include(room => room.Cameras)
             .SingleOrDefault(room => room.RoomName == name);
         if (result is not null)
         {
-            return result;
+            if (PasswordHash.VerifyPassword(password, result.Password))
+            {
+                return result;
+            }
+            throw new RoomPasswordWrongException(name);
         }
-        // TODO Create own exception type
-        else
-        {
-            throw new Exception("Room does not exist");
-        }
+        throw new RoomDoesNotExistException(name);
     }
 
-    // TODO Check whether it deletes cameras as well
+
+    public RoomModel GetRoomByName(string name)
+    {
+        var result = context.Rooms.Include(room => room.Cameras)
+                .SingleOrDefault(room => room.RoomName == name);
+        if (result is not null)
+        {
+            return result;
+        }
+        throw new RoomDoesNotExistException(name);
+    }
+    
     public bool DeleteRoom(RoomModel roomToRemove)
     {
         context.Rooms.Remove(roomToRemove);
         return SaveChanges();
     }
 
-    public RoomModel GetFirstRoom()
-    {
-        return context.Rooms.First();
-    }
-
     public bool CheckRoomAndPassword(string roomName, string? password)
     {
         var roomToCheck = context.Rooms.Find(roomName);
-        return PasswordHash.VerifyPassword(password, roomToCheck.Password);
+        if (roomToCheck is not null)
+        {
+            return PasswordHash.VerifyPassword(password, roomToCheck.Password);
+        }
+        return false;
     }
-
-
+    
 }

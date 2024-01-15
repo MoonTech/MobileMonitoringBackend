@@ -3,6 +3,8 @@ using System.Net;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Text.Json;
+using MobileMonitoringBackend.Contracts.DTOs.Parameters.User;
+using MobileMonitoringBackend.Contracts.DTOs.Responses.User;
 
 namespace MobileMonitoringBackendTests.Utils;
 
@@ -82,6 +84,29 @@ public static class HttpClientExtender
             }
         }
         return responseMessage.StatusCode;
+    }
+    
+    public static async Task<string> GetUserToken(this HttpClient httpClient, 
+        string userLogin="UserLogin", string userPassword="UserPassword")
+    {
+        try
+        {
+            var userToken = (await httpClient.SendRequest<SignUpUserResponse>(RequestType.Post, "user", new SignUpUserParameter()
+            {
+                Login = userLogin,
+                Password = userPassword
+            })).AccessToken;
+            return userToken;
+        }
+        catch
+        {
+            var userToken = await httpClient.SendRequest<SignUpUserResponse>(RequestType.Post, "user/login", new SignUpUserParameter()
+            {
+                Login = "UserLogin",
+                Password = "UserPassword"
+            });
+            return userToken.AccessToken;
+        }
     }
 }
 

@@ -1,4 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using MobileMonitoringBackend.BusinessLogical.Utils.Exceptions;
+using MobileMonitoringBackend.BusinessLogical.Utils.Exceptions.Camera;
 using MobileMonitoringBackend.DataAccess.DbContexts;
 using MobileMonitoringBackend.Domain.Models;
 
@@ -8,27 +10,32 @@ public class CameraRepository : BaseRepository, ICameraRepository
 {
     public CameraRepository(MobileMonitoringDbContext context) : base(context) {}
     
-    public CameraModel? CreateCameraWithRoom(string cameraName, RoomModel room)
+    public CameraModel CreateCameraWithRoom(string cameraName, RoomModel room)
     {
-        var roomEntity = context.Cameras.Add(new CameraModel()
+        try
         {
-            CameraName = cameraName,
-            CameraToken = CreateCameraToken(10),
-            AcceptationState = false,
-            Room = room
-        });
-        var newCamera = roomEntity.Entity;
-        if (SaveChanges())
-        {
-            return newCamera;
+            var roomEntity = context.Cameras.Add(new CameraModel()
+            {
+                CameraName = cameraName,
+                CameraToken = CreateCameraToken(10),
+                AcceptationState = false,
+                Room = room
+            });
+            var newCamera = roomEntity.Entity;
+            if (SaveChanges())
+            {
+                return newCamera;
+            }
+            throw new CouldNotSaveChangesException();
         }
-        else
+        catch (Exception)
         {
-            return null;
+            throw new CameraAlreadyExistsException
+                ($"Camera {cameraName} already exists in room {room.RoomName}");
         }
     }
 
-    public CameraModel? GetCameraById(Guid id)
+    public CameraModel GetCameraById(Guid id)
     {
         var result = context.Cameras.Include(camera => camera.Room)
             .SingleOrDefault(camera => camera.Id == id);
@@ -36,11 +43,7 @@ public class CameraRepository : BaseRepository, ICameraRepository
         {
             return result;
         }
-        // TODO Create own exception type
-        else
-        {
-            throw new Exception("Camera does not exist");
-        }
+        throw new CameraDoesNotExistException($"Camera of id {id} does not exist");
     }
 
     public bool DeleteCamera(CameraModel camera)
@@ -52,13 +55,15 @@ public class CameraRepository : BaseRepository, ICameraRepository
     public bool AcceptCamera(CameraModel camera)
     {
         camera.AcceptationState = true;
-        return SaveChanges();
+        if (SaveChanges())
+        {
+            return true;
+        }
+        throw new CameraAlreadyAcceptedException(camera.Id);
     }
     
-
     private string CreateCameraToken(int length)
     {
-        
         Random random = new Random();
         const string chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
         bool foundUniqueToken = false;

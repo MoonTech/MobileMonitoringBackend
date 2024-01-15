@@ -1,12 +1,9 @@
 using System.IdentityModel.Tokens.Jwt;
-using System.Text;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.IdentityModel.Tokens;
 using Microsoft.Net.Http.Headers;
 using Microsoft.OpenApi.Models;
-using Microsoft.VisualBasic;
 using MobileMonitoringBackend.BusinessLogical.Repositories.CameraRepository;
 using MobileMonitoringBackend.BusinessLogical.Repositories.RecordingRepository;
 using MobileMonitoringBackend.BusinessLogical.Repositories.RoomRepository;
@@ -57,17 +54,17 @@ builder.Services.AddSwaggerGen(options =>
 
 builder.Services.AddAuthentication(options =>
 {
-    options.DefaultScheme = "MultiAuthSchemes";
-    options.DefaultChallengeScheme = "MultiAuthSchemes";
-}).AddJwtBearer("ApiAuthenticationScheme", options =>
+    options.DefaultScheme = Constants.MultiAuthSchemes;
+    options.DefaultChallengeScheme = Constants.MultiAuthSchemes;
+}).AddJwtBearer(Constants.ApiAuthScheme, options =>
 {
     options.TokenValidationParameters = Constants.TokenValidationParameters(
         builder.Configuration, "Jwt:ApiKey");
-}).AddJwtBearer("RoomAuthenticationScheme", options =>
+}).AddJwtBearer(Constants.RoomAuthScheme, options =>
 {
     options.TokenValidationParameters = Constants.TokenValidationParameters(
         builder.Configuration, "Jwt:RoomKey");
-}).AddPolicyScheme("MultiAuthSchemes", JwtBearerDefaults.AuthenticationScheme, options =>
+}).AddPolicyScheme(Constants.MultiAuthSchemes, JwtBearerDefaults.AuthenticationScheme, options =>
 {
     options.ForwardDefaultSelector = context =>
     {
@@ -78,36 +75,31 @@ builder.Services.AddAuthentication(options =>
             var jwtHandler = new JwtSecurityTokenHandler();
             var rawToken = jwtHandler.ReadJwtToken(token);
             return (rawToken.Claims.SingleOrDefault(c => c.Value == "TokenAPI") is not null)
-                ? "ApiAuthenticationScheme"
-                : "RoomAuthenticationScheme";
+                ? Constants.ApiAuthScheme
+                : Constants.RoomAuthScheme;
         }
 
-        return "RoomAuthenticationScheme";
+        return Constants.RoomAuthScheme;
     };
 });
 
 builder.Services.AddAuthorization(options =>
 {
-    var apiAuthenticationScheme = new AuthorizationPolicyBuilder("ApiAuthenticationScheme");
-    options.AddPolicy("ApiAuthenticationScheme", apiAuthenticationScheme
+    var apiAuthenticationScheme = new AuthorizationPolicyBuilder(Constants.ApiAuthScheme);
+    options.AddPolicy(Constants.ApiAuthScheme, apiAuthenticationScheme
         .RequireAuthenticatedUser()
         .Build());
-    var RoomAuthenticationScheme = new AuthorizationPolicyBuilder("RoomAuthenticationScheme");
-    options.AddPolicy("RoomAuthenticationScheme", RoomAuthenticationScheme
+    var roomAuthenticationScheme = new AuthorizationPolicyBuilder(Constants.RoomAuthScheme);
+    options.AddPolicy(Constants.RoomAuthScheme, roomAuthenticationScheme
         .RequireAuthenticatedUser()
         .Build());
 });
 
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
-//if (app.Environment.IsDevelopment())
-//{
 app.UseSwagger();
 app.UseSwaggerUI();
-//}
 
-//app.UseHttpsRedirection();
 app.UseCors(corsPolicyBuilder =>
     corsPolicyBuilder.AllowAnyOrigin().AllowAnyHeader().AllowAnyMethod()
 );

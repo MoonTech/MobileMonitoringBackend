@@ -8,6 +8,9 @@ using MobileMonitoringBackend.BusinessLogical.Repositories.RecordingRepository;
 using MobileMonitoringBackend.BusinessLogical.Repositories.RoomRepository;
 using MobileMonitoringBackend.BusinessLogical.Repositories.VideoServerRepository;
 using MobileMonitoringBackend.BusinessLogical.Services;
+using MobileMonitoringBackend.BusinessLogical.Utils.Exceptions;
+using MobileMonitoringBackend.BusinessLogical.Utils.Exceptions.Recording;
+using MobileMonitoringBackend.BusinessLogical.Utils.Exceptions.Room;
 using MobileMonitoringBackend.Contracts.DTOs.Parameters.VideoServer;
 using MobileMonitoringBackend.Contracts.DTOs.Responses.VideoServer;
 using MobileMonitoringBackend.Domain.Models;
@@ -41,70 +44,100 @@ public class videoServerController : ControllerBase
     
     [AllowAnonymous]
     [HttpPost("streamUrl")]
-    public StreamUrlResponse getStreamUrl(StreamUrlParameter parameter)
+    public ActionResult<StreamUrlResponse> GetStreamUrl(StreamUrlParameter parameter)
     {
-        var camera = _cameraRepository.GetCameraById(parameter.CameraId);
-        if (camera is not null)
+        try
         {
+            var camera = _cameraRepository.GetCameraById(parameter.CameraId);
             var streamUrl = Constants.StreamBaseUrl;
             streamUrl += camera.CameraToken;
-            return new()
+            return Ok(new StreamUrlResponse
             {
                 StreamUrl = streamUrl
-            };
+            });
         }
-        throw new Exception("Probably camera does not exist");
+        catch (MobileMonitoringException ex)
+        {
+            return StatusCode(ex.HttpCode, new MobileMonitoringExceptionJSON(ex));
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, ex.Message); 
+        }
     }
 
-    [Authorize(AuthenticationSchemes = "ApiAuthenticationScheme")]
+    [Authorize(AuthenticationSchemes = Constants.ApiAuthScheme)]
     [HttpPut("record/start")]
     public async Task<IActionResult> StartRecording(StartRecordingParameter parameter)
     {
-        var camera = _cameraRepository.GetCameraById(parameter.CameraId);
-        var userLogin = Request.GetUserLoginFromToken();
-        if (camera is not null && userLogin == camera.Room.OwnerLogin)
+        try
         {
-            var response = await _videoServerRepository.StartRecording(Constants.StartRecordingEndpoint(camera.CameraToken));
-            if (response.StatusCode == HttpStatusCode.OK)
+            var camera = _cameraRepository.GetCameraById(parameter.CameraId);
+            var userLogin = Request.GetUserLoginFromToken();
+            if (userLogin == camera.Room!.OwnerLogin)
             {
-                _recordingCamerasCache.Add(parameter.CameraId);
-                return Ok($"Started recording for camera {parameter.CameraId}");
+                var response =
+                    await _videoServerRepository.StartRecording(Constants.StartRecordingEndpoint(camera.CameraToken));
+                if (response.StatusCode == HttpStatusCode.OK 
+                    && !(_recordingCamerasCache.Contains(parameter.CameraId)))
+                {
+                    _recordingCamerasCache.Add(parameter.CameraId);
+                    return Ok($"Started recording for camera {parameter.CameraId}");
+                }
+                throw new RecordingCamerasCacheException();
             }
-            return BadRequest("Could not start recording");
+            throw new RoomWrongOwnerException();
         }
-        return Unauthorized("Authentication failed - camera does not exist or you are not an owner.");
+        catch (MobileMonitoringException ex)
+        {
+            return StatusCode(ex.HttpCode, new MobileMonitoringExceptionJSON(ex));
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, ex.Message); 
+        }
     }
 
-    [Authorize(AuthenticationSchemes = "ApiAuthenticationScheme")]
+    [Authorize(AuthenticationSchemes = Constants.ApiAuthScheme)]
     [HttpPut("record/stop")]
     public async Task<IActionResult> StopRecording(StopRecordingParameter parameter)
     {
-        var camera = _cameraRepository.GetCameraById(parameter.CameraId);
-        var userLogin = Request.GetUserLoginFromToken();
-        if (camera is not null && userLogin == camera.Room.OwnerLogin)
+        try
         {
-            var response = await _videoServerRepository.StopRecording(Constants.StopRecordingEndpoint(camera.CameraToken));
-            if (response.StatusCode == HttpStatusCode.OK)
+            var camera = _cameraRepository.GetCameraById(parameter.CameraId);
+            var userLogin = Request.GetUserLoginFromToken();
+            if (userLogin == camera.Room!.OwnerLogin)
             {
-                _recordingCamerasCache.Remove(parameter.CameraId);
-                var videoPath = (await response.Content.ReadAsStringAsync()).Trim('/');
-                var fileResponseMessage = await _videoServerRepository.GetRecording(videoPath);
-                var file = await fileResponseMessage.Content.ReadAsStreamAsync();
-                string fileName = CreateFileName(camera.RoomName, camera.CameraName);
-                var videoUrl = CreateRecordingUrl(videoPath);
-                var recording = _recordingRepository.AddRecording(fileName, videoUrl, camera.Room);
-                if (recording is not null)
+                var response =
+                    await _videoServerRepository.StopRecording(Constants.StopRecordingEndpoint(camera.CameraToken));
+                if (response.StatusCode == HttpStatusCode.OK 
+                    && _recordingCamerasCache.Contains(parameter.CameraId))
                 {
+                    _recordingCamerasCache.Remove(parameter.CameraId);
+                    var videoPath = (await response.Content.ReadAsStringAsync()).Trim('/');
+                    var fileResponseMessage = await _videoServerRepository.GetRecording(videoPath);
+                    var file = await fileResponseMessage.Content.ReadAsStreamAsync();
+                    string fileName = CreateFileName(camera.RoomName, camera.CameraName);
+                    var videoUrl = CreateRecordingUrl(videoPath);
+                    _recordingRepository.AddRecording(fileName, videoUrl, camera.Room);
                     return File(file, "application/force-download", fileName);
                 }
-                return BadRequest("Could not save a recording");
+
+                throw new RecordingCamerasCacheException();
             }
-            return BadRequest("Could not stop recording or download a file");
+            throw new RoomWrongOwnerException();
         }
-        return Unauthorized("Authentication failed - camera does not exist or you are not an owner.");
+        catch (MobileMonitoringException ex)
+        {
+            return StatusCode(ex.HttpCode, new MobileMonitoringExceptionJSON(ex));
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, ex.Message); 
+        }
     }
 
-    [Authorize(AuthenticationSchemes = "ApiAuthenticationScheme")]
+    [Authorize(AuthenticationSchemes = Constants.ApiAuthScheme)]
     [HttpGet("record/check")]
     public IActionResult CheckRecording([Required]Guid id)
     {
@@ -116,48 +149,59 @@ public class videoServerController : ControllerBase
     [HttpGet("record/{recordingName}")]
     public async Task<IActionResult> DownloadRecording(string recordingName)
     {
-        var recording = _recordingRepository.GetRecording(recordingName);
-        if (recording is not null)
+        try
         {
+            var recording = _recordingRepository.GetRecording(recordingName);
             var room = _roomRepository.GetRoomByName(recording.RoomName);
             if (AuthorizeRoomSpectator(room))
             {
                 var fileResponseMessage = await _videoServerRepository.GetRecording(TrimRecordingUrl(recording.Url));
                 var file = await fileResponseMessage.Content.ReadAsStreamAsync();
-                if (recording is not null)
-                {
-                    return File(file, "application/force-download", recordingName);
-                }
-                return BadRequest("Could not save a recording");
+                return File(file, "application/force-download", recordingName);
             }
+            throw new RoomAccessDeniedException(room.RoomName);
         }
-
-        throw new Exception("Could not download recordings");
+        catch (MobileMonitoringException ex)
+        {
+            return StatusCode(ex.HttpCode, new MobileMonitoringExceptionJSON(ex));
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, ex.Message); 
+        }
     }
 
-    [Authorize(AuthenticationSchemes = "ApiAuthenticationScheme")]
+    [Authorize(AuthenticationSchemes = Constants.ApiAuthScheme)]
     [HttpDelete("record/{recordingName}")]
     public async Task<IActionResult> DeleteRecording(string recordingName)
     {
-        var recording = _recordingRepository.GetRecording(recordingName);
-        var userLogin = Request.GetUserLoginFromToken();
-        if (recording is not null && userLogin==recording.Room.OwnerLogin)
+        try
         {
-            var response = await _videoServerRepository.DeleteRecording(TrimRecordingUrl(recording.Url));
-            if (response.StatusCode == HttpStatusCode.NoContent)
+            var recording = _recordingRepository.GetRecording(recordingName);
+            var userLogin = Request.GetUserLoginFromToken();
+            if (userLogin == recording.Room!.OwnerLogin)
             {
-                if (_recordingRepository.DeleteRecording(recording))
+                var response = await _videoServerRepository.DeleteRecording(TrimRecordingUrl(recording.Url));
+                if (response.StatusCode == HttpStatusCode.NoContent)
                 {
-                    return Ok("Recording deleted Succesfully");
+                    if (_recordingRepository.DeleteRecording(recording))
+                    {
+                        return Ok("Recording deleted Succesfully");
+                    }
                 }
+
+                return BadRequest("Deleting recording failed");
             }
-            return BadRequest("Deleting recording failed");
+            throw new RoomWrongOwnerException();
         }
-        if (recording is not null)
+        catch (MobileMonitoringException ex)
         {
-            return Unauthorized("You are not an owner of this video");
+            return StatusCode(ex.HttpCode, new MobileMonitoringExceptionJSON(ex));
         }
-        return BadRequest("Such a recording does not exist");
+        catch (Exception ex)
+        {
+            return StatusCode(500, ex.Message); 
+        }
     }
     
     private bool AuthorizeRoomSpectator(RoomModel room)

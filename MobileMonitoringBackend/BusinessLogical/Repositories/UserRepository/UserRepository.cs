@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using MobileMonitoringBackend.BusinessLogical.Authentication;
 using MobileMonitoringBackend.BusinessLogical.Utils;
 using MobileMonitoringBackend.BusinessLogical.Utils.Exceptions;
+using MobileMonitoringBackend.BusinessLogical.Utils.Exceptions.User;
 using MobileMonitoringBackend.DataAccess.DbContexts;
 using MobileMonitoringBackend.Domain.Models;
 
@@ -11,7 +12,7 @@ public class UserRepository : BaseRepository, IUserRepository
 {
     public UserRepository(MobileMonitoringDbContext context) : base(context) {}
     
-    public UserModel? AddUser(string login, string password)
+    public UserModel AddUser(string login, string password)
     {
         var newUser = new UserModel()
         {
@@ -25,12 +26,12 @@ public class UserRepository : BaseRepository, IUserRepository
             {
                 return newUser;
             }
-            throw new CouldNotSaveChangesException("Could not save changes in database");
+            throw new CouldNotSaveChangesException();
         }
         catch (Exception)
         {
             GetUser(login);
-            throw new ObjectAlreadyExistsInDbException($"User with login {login} already exists.");
+            throw new UserAlreadyExistsException(login);
         }
     }
 
@@ -42,7 +43,7 @@ public class UserRepository : BaseRepository, IUserRepository
             return user;
         }
         GetUser(login);
-        throw new WrongPasswordException($"Wrong password for user {login}");
+        throw new UserPasswordWrongException(login);
     }
 
     public UserModel GetUser(string login)
@@ -52,6 +53,6 @@ public class UserRepository : BaseRepository, IUserRepository
         {
             return user;
         }
-        throw new ObjectDoesNotExistInDbException($"User {login} does not exist in database");
+        throw new UserDoesNotExistException(login);
     }
 }

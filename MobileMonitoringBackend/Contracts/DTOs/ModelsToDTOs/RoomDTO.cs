@@ -1,6 +1,5 @@
 namespace MobileMonitoringBackend.Contracts.DTOs.ModelsToDTOs
 {
-    // TODO - maybe some inheritance with models without passwords???
     public class RoomDTO
     {
         public string RoomName { get; set; }

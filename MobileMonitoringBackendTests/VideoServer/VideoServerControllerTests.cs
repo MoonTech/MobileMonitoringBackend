@@ -40,17 +40,17 @@ public class VideoServerControllerTests
     [Fact]
     public void StreamUrlShouldReturnUrl()
     {
-        var response = _videoServerController.getStreamUrl(new()
+        var response = _videoServerController.GetStreamUrl(new()
         {
             CameraId = _cameraModel.Id
         });
-        Assert.True(response.StreamUrl.Length > 0);
+        Assert.True(response.Value!.StreamUrl.Length > 0);
     }
 
     [Fact]
     public async Task VideoChcekShouldReturn200() // TODO Change this test to return true
     {
-        var userToken = await RoomControllerTests.GetUserToken(_httpClient); // TODO Move all the static methods to other place
+        var userToken = await _httpClient.GetUserToken();
         await RoomControllerTests.PopulateDbWithRoom(_httpClient, "Room1", "RoomPassword", userToken);
         try
         {

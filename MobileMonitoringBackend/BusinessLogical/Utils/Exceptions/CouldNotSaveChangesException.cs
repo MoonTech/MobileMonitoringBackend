@@ -1,6 +1,9 @@
 namespace MobileMonitoringBackend.BusinessLogical.Utils.Exceptions;
 
-public class CouldNotSaveChangesException : Exception
+public class CouldNotSaveChangesException : MobileMonitoringException
 {
-    public CouldNotSaveChangesException(string message) : base(message) {}
+    public CouldNotSaveChangesException()
+        : base(StatusCodes.Status500InternalServerError,
+            ErrorCodes.CouldNotSaveChanges,
+            "Could not save changes") {}
 }
