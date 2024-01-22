@@ -59,6 +59,7 @@ public class CameraRepository : BaseRepository, ICameraRepository
         {
             return true;
         }
+        GetCameraById(camera.Id);
         throw new CameraAlreadyAcceptedException(camera.Id);
     }
     

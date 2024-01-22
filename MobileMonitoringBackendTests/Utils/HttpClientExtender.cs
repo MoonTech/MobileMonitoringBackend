@@ -3,6 +3,7 @@ using System.Net;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Text.Json;
+using MobileMonitoringBackend.BusinessLogical.Utils.Exceptions.User;
 using MobileMonitoringBackend.Contracts.DTOs.Parameters.User;
 using MobileMonitoringBackend.Contracts.DTOs.Responses.User;
 
@@ -10,7 +11,6 @@ namespace MobileMonitoringBackendTests.Utils;
 
 public static class HttpClientExtender
 {
-    // TODO These two functions are horrible
     public static async Task<T> SendRequest<T>(this HttpClient httpClient, RequestType requestType, 
         string endpoint, object? bodyObject=null, string? token=null)
     {
@@ -96,7 +96,11 @@ public static class HttpClientExtender
                 Login = userLogin,
                 Password = userPassword
             })).AccessToken;
-            return userToken;
+            if (userToken is not null)
+            {
+                return userToken;
+            }
+            throw new UserAlreadyExistsException(userLogin);
         }
         catch
         {

@@ -6,7 +6,7 @@ namespace MobileMonitoringBackend.BusinessLogical.Utils;
 public static class Constants
 
 {
-    public static readonly string VideoServerHost = "161.35.206.64";
+    public static readonly string VideoServerHost = "localhost";
 
     public static string StreamBaseUrl = $"rtmp://{VideoServerHost}:1936/live/";
     public static string WatchBaseUrl = $"http://{VideoServerHost}:8081/live/";

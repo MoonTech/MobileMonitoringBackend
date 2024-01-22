@@ -28,7 +28,6 @@ public class roomController : ControllerBase
     private readonly IUserRepository _userRepository;
     private readonly IRecordingRepository _recordingRepository;
     private readonly IConfiguration _config;
-    // TODO move _tokenValidHours everywhere to constants
     private readonly int _tokenValidHours = 1;
     private readonly int _refreshTokenValidHours = 1;
 

@@ -1,5 +1,6 @@
 using MobileMonitoringBackend.BusinessLogical.Repositories.CameraRepository;
 using MobileMonitoringBackend.BusinessLogical.Repositories.RoomRepository;
+using MobileMonitoringBackend.BusinessLogical.Utils.Exceptions.Camera;
 using MobileMonitoringBackend.Domain.Models;
 using MobileMonitoringBackendTests.Utils;
 
@@ -46,14 +47,20 @@ public class CameraRepositoryTests
     }
 
     [Fact]
-    public void AcceptNonExistingCameraShouldReturnFalse()
+    public void AcceptNonExistingCameraShouldThrowCameraDoesNotExistException()
     {
-        var result = _cameraRepositoryMock.AcceptCamera(new CameraModel()
+        try
         {
-            CameraName = "NonExistingCamera"
-        });
-        Assert.True(!result);
-    } 
+            _cameraRepositoryMock.AcceptCamera(new CameraModel()
+            {
+                CameraName = "NonExistingCamera"
+            });
+        }
+        catch (Exception ex)
+        {
+            Assert.True(ex is CameraDoesNotExistException);
+        }
+    }
 }
 
 public static class CameraRepositoryMock

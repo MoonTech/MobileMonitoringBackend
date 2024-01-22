@@ -1,4 +1,5 @@
 using System.Net;
+using System.Net.Http.Headers;
 using Microsoft.Extensions.Configuration;
 using Moq;
 using MobileMonitoringBackend.BusinessLogical.Repositories.RecordingRepository;

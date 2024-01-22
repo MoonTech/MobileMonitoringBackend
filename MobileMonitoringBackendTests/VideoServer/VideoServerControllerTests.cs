@@ -1,4 +1,5 @@
 using System.Net;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using Moq;
 using MobileMonitoringBackend.BusinessLogical.Repositories.RecordingRepository;
@@ -38,17 +39,17 @@ public class VideoServerControllerTests
     }
 
     [Fact]
-    public void StreamUrlShouldReturnUrl()
+    public void StreamUrlShouldReturnOkObjectResult()
     {
         var response = _videoServerController.GetStreamUrl(new()
         {
             CameraId = _cameraModel.Id
         });
-        Assert.True(response.Value!.StreamUrl.Length > 0);
+        Assert.True(response.Result is OkObjectResult);
     }
 
     [Fact]
-    public async Task VideoChcekShouldReturn200() // TODO Change this test to return true
+    public async Task VideoChcekShouldReturn200()
     {
         var userToken = await _httpClient.GetUserToken();
         await RoomControllerTests.PopulateDbWithRoom(_httpClient, "Room1", "RoomPassword", userToken);

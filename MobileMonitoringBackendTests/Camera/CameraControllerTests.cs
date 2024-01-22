@@ -19,33 +19,26 @@ public class CameraControllerTests
       _httpClient.BaseAddress = new Uri("http://localhost:5000/");
    }
 
-   // TODO Change this test
    [Fact]
-   public async Task PostCameraShouldReturnErrorIfTwiceTheSameRoom()
+   public async Task PostCameraShouldReturn400IfTwiceTheSameCamera()
    {
       var userToken = await _httpClient.GetUserToken();
       await RoomControllerTests.PopulateDbWithRoom(_httpClient, "Room1", "RoomPassword", userToken);
-      try
-      {
-         await _httpClient.SendRequest<PostCameraResponse>(RequestType.Post, "camera",
-            new PostCameraParameter()
-            {
-               CameraName = "Camera1",
-               RoomName = "Room1",
-               Password = ""
-            });
-         await _httpClient.SendRequest<PostCameraResponse>(RequestType.Post, "camera",
-            new PostCameraParameter()
-            {
-               CameraName = "Camera1",
-               RoomName = "Room1",
-               Password = ""
-            });
-      }
-      catch
-      {
-         Assert.True(true);
-      }
+      await _httpClient.SendRequestNoAnswerBody(RequestType.Post, "camera",
+         new PostCameraParameter()
+         {
+            CameraName = "Camera1",
+            RoomName = "Room1",
+            Password = ""
+         });
+      var response = await _httpClient.SendRequestNoAnswerBody(RequestType.Post, "camera",
+         new PostCameraParameter()
+         {
+            CameraName = "Camera1",
+            RoomName = "Room1",
+            Password = ""
+         });
+      Assert.True(response == HttpStatusCode.BadRequest);
    }
 
    [Fact]
