@@ -33,7 +33,7 @@ This repository includes Mobile Monitoring Backend created by Jakub Winiarski. C
 
 <img src="https://github.com/MoonTech/MobileMonitoringBackend/assets/93740269/54d868f1-4940-442f-a935-ec1f89adc0ed" width="400px"/>
 
-Moreover, teh API acts as a middleware between backend and video services. Mobile Monitoring Backend uses the scheme shown below. The codebase has been designed following n-tier layer architecture pattern.
+Moreover, the API acts as a middleware between backend and video services. Mobile Monitoring Backend uses the scheme shown below. The codebase has been designed following n-tier layer architecture pattern.
 
 <img src="https://github.com/MoonTech/MobileMonitoringBackend/assets/93740269/5a4d99fe-a500-42fb-b8bf-593e833d08c8" width="400px"/>
 
